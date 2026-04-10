@@ -182,6 +182,7 @@ function reset() {
     fileInput.value = '';
     copyBtn.style.display = 'none';
     downloadBtn.style.display = 'none';
+    document.getElementById('qualityDownloadSection').classList.add('hidden');
     setStatusMessage('');
     uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -336,6 +337,12 @@ async function processSingle(item) {
 
         downloadBtn.style.display = 'flex';
         downloadBtn.onclick = () => downloadImage(item);
+
+        const qualitySection = document.getElementById('qualityDownloadSection');
+        qualitySection.classList.remove('hidden');
+        qualitySection.querySelectorAll('.quality-btn').forEach(btn => {
+            btn.onclick = () => downloadImageWithQuality(item, parseInt(btn.dataset.quality, 10));
+        });
 
         renderSingleProcessedMeta(item);
 
@@ -513,6 +520,33 @@ function downloadImage(item) {
     a.href = item.processedUrl;
     a.download = `unwatermarked_${item.name.replace(/\.[^.]+$/, '')}.png`;
     a.click();
+}
+
+async function downloadImageWithQuality(item, qualityPercent) {
+    if (!item.processedBlob) return;
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(item.processedBlob);
+
+    img.onload = () => {
+        const scale = qualityPercent / 100;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            URL.revokeObjectURL(objectUrl);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `unwatermarked_${item.name.replace(/\.[^.]+$/, '')}_${qualityPercent}pct.jpg`;
+            a.click();
+        }, 'image/jpeg', 0.92);
+    };
+
+    img.src = objectUrl;
 }
 
 async function downloadAll() {

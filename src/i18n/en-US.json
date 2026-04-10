@@ -46,5 +46,11 @@
   "info.position": "Position",
   "info.status": "Status",
   "info.removed": "Watermark Removed",
-  "info.skipped": "No removable watermark detected; original kept"
+  "info.skipped": "No removable watermark detected; original kept",
+  "btn.download.quality": "Download (Compressed)",
+  "download.quality.label": "File Size",
+  "download.quality.original": "Original",
+  "download.quality.75": "75% (Light compression)",
+  "download.quality.50": "50% (Half size)",
+  "download.quality.25": "25% (Minimum size)"
 }

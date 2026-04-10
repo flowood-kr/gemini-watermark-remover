@@ -46,5 +46,11 @@
   "info.position": "位置",
   "info.status": "状态",
   "info.removed": "水印已移除",
-  "info.skipped": "未检测到可移除水印，已保留原图"
+  "info.skipped": "未检测到可移除水印，已保留原图",
+  "btn.download.quality": "压缩下载",
+  "download.quality.label": "文件大小",
+  "download.quality.original": "原始大小",
+  "download.quality.75": "75% (轻度压缩)",
+  "download.quality.50": "50% (压缩一半)",
+  "download.quality.25": "25% (最小文件)"
 }

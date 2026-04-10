@@ -46,5 +46,11 @@
 	"info.position": "Posição",
 	"info.status": "Status",
 	"info.removed": "Marca d'água removida",
-	"info.skipped": "Nenhuma marca d'água removível detectada; imagem original mantida"
+	"info.skipped": "Nenhuma marca d'água removível detectada; imagem original mantida",
+	"btn.download.quality": "Download (Comprimido)",
+	"download.quality.label": "Tamanho do arquivo",
+	"download.quality.original": "Original",
+	"download.quality.75": "75% (Compressão leve)",
+	"download.quality.50": "50% (Metade do tamanho)",
+	"download.quality.25": "25% (Tamanho mínimo)"
 }

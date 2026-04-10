@@ -1,5 +1,6 @@
-const FALLBACK_LOCALE = 'en-US';
+const FALLBACK_LOCALE = 'ko-KR';
 const LOCALE_SHORT = Object.freeze({
+  'ko-KR': '한국어',
   'zh-CN': '中文',
   'en-US': 'EN',
   'pt-BR': 'PT',
@@ -11,6 +12,7 @@ function toCanonicalLocale(locale) {
   if (SUPPORTED_LOCALES.includes(locale)) return locale;
 
   const normalized = locale.toLowerCase();
+  if (normalized.startsWith('ko')) return 'ko-KR';
   if (normalized.startsWith('zh')) return 'zh-CN';
   if (normalized.startsWith('en')) return 'en-US';
   if (normalized.startsWith('pt')) return 'pt-BR';
