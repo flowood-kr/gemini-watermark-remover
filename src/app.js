@@ -28,6 +28,7 @@ let processedCount = 0;
 let zoom = null;
 let currentSingleItem = null;
 let currentMode = 'watermark'; // 'watermark' | 'background'
+let bgSubMode = 'color';      // 'color' | 'ai'  (배경 제거 서브모드)
 
 // DOM 참조
 const uploadArea = document.getElementById('uploadArea');
@@ -119,7 +120,7 @@ async function init() {
 function setupModeToggle() {
     const btnWatermark = document.getElementById('modeWatermark');
     const btnBgRemoval = document.getElementById('modeBgRemoval');
-    const bgHint = document.getElementById('bgModeHint');
+    const bgSubModeRow = document.getElementById('bgSubModeRow');
 
     const activeClasses = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
     const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
@@ -132,14 +133,15 @@ function setupModeToggle() {
             btnWatermark.classList.remove(...inactiveClasses);
             btnBgRemoval.classList.remove(...activeClasses);
             btnBgRemoval.classList.add(...inactiveClasses);
+            bgSubModeRow?.classList.add('hidden');
         } else {
             btnBgRemoval.classList.add(...activeClasses);
             btnBgRemoval.classList.remove(...inactiveClasses);
             btnWatermark.classList.remove(...activeClasses);
             btnWatermark.classList.add(...inactiveClasses);
+            bgSubModeRow?.classList.remove('hidden');
+            applyBgSubMode('color'); // 배경 제거 진입 시 색상 모드 기본값
         }
-
-        bgHint?.classList.toggle('hidden', mode !== 'background');
 
         // 모드 전환 시 현재 작업 초기화
         if (currentSingleItem) reset();
@@ -150,10 +152,47 @@ function setupModeToggle() {
 }
 
 // ──────────────────────────────────────────────
+// 배경 제거 서브모드 토글 (색상 제거 / AI 제거)
+// ──────────────────────────────────────────────
+function setupBgSubModeToggle() {
+    const btnColor = document.getElementById('bgSubModeColor');
+    const btnAI    = document.getElementById('bgSubModeAI');
+
+    if (btnColor) btnColor.addEventListener('click', () => applyBgSubMode('color'));
+    if (btnAI)    btnAI.addEventListener('click',    () => applyBgSubMode('ai'));
+}
+
+function applyBgSubMode(subMode) {
+    bgSubMode = subMode;
+
+    const btnColor  = document.getElementById('bgSubModeColor');
+    const btnAI     = document.getElementById('bgSubModeAI');
+    const bgHint    = document.getElementById('bgModeHint');
+
+    const activeClasses   = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
+    const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
+
+    if (subMode === 'color') {
+        btnColor?.classList.add(...activeClasses);
+        btnColor?.classList.remove(...inactiveClasses);
+        btnAI?.classList.remove(...activeClasses);
+        btnAI?.classList.add(...inactiveClasses);
+        bgHint?.classList.add('hidden');
+    } else {
+        btnAI?.classList.add(...activeClasses);
+        btnAI?.classList.remove(...inactiveClasses);
+        btnColor?.classList.remove(...activeClasses);
+        btnColor?.classList.add(...inactiveClasses);
+        bgHint?.classList.remove('hidden');
+    }
+}
+
+// ──────────────────────────────────────────────
 // 이벤트 리스너 설정
 // ──────────────────────────────────────────────
 function setupEventListeners() {
     setupModeToggle();
+    setupBgSubModeToggle();
 
     uploadArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
@@ -206,7 +245,9 @@ function setupEventListeners() {
         btn.disabled = true;
         btn.textContent = '배경 제거 중...';
         try {
-            const bgBlob = await runBackgroundRemoval(currentSingleItem.processedBlob);
+            const bgBlob = bgSubMode === 'color'
+                ? await removeBackgroundByColor(currentSingleItem.processedBlob)
+                : await runBackgroundRemoval(currentSingleItem.processedBlob);
             if (currentSingleItem.processedUrl) URL.revokeObjectURL(currentSingleItem.processedUrl);
             currentSingleItem.processedBlob = bgBlob;
             currentSingleItem.processedUrl = URL.createObjectURL(bgBlob);
@@ -384,8 +425,12 @@ async function processSingle(item) {
         let processedBlob;
 
         if (currentMode === 'background') {
-            // 배경 제거 모드
-            processedBlob = await runBackgroundRemoval(item.file);
+            // 배경 제거 모드 — 서브모드에 따라 분기
+            if (bgSubMode === 'color') {
+                processedBlob = await removeBackgroundByColor(item.file);
+            } else {
+                processedBlob = await runBackgroundRemoval(item.file);
+            }
             item.processedMeta = { mode: 'background' };
         } else {
             // 워터마크 제거 모드
@@ -447,6 +492,108 @@ async function runBackgroundRemoval(fileOrBlob) {
                 showLoading(`배경 제거 중... ${pct}%`);
             }
         },
+    });
+}
+
+// ──────────────────────────────────────────────
+// 색상 기반 배경 제거 (Canvas BFS flood fill)
+// 로고·그래픽처럼 단색 배경 이미지에 최적
+// ──────────────────────────────────────────────
+async function removeBackgroundByColor(fileOrBlob) {
+    showLoading('배경 색상 분석 중...');
+
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(fileOrBlob);
+        const img = new Image();
+
+        img.onload = () => {
+            try {
+                const w = img.naturalWidth, h = img.naturalHeight;
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+
+                showLoading('배경 제거 중...');
+
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const data = imageData.data;
+                const TOLERANCE = 32;
+
+                // 4개 코너 픽셀 평균으로 배경색 결정
+                const cornerIdx = [0, (w - 1), (h - 1) * w, (h - 1) * w + (w - 1)];
+                const bgR = (cornerIdx.reduce((s, i) => s + data[i * 4],     0) / 4) | 0;
+                const bgG = (cornerIdx.reduce((s, i) => s + data[i * 4 + 1], 0) / 4) | 0;
+                const bgB = (cornerIdx.reduce((s, i) => s + data[i * 4 + 2], 0) / 4) | 0;
+
+                const colorDist = (i4) => {
+                    const dr = data[i4] - bgR, dg = data[i4 + 1] - bgG, db = data[i4 + 2] - bgB;
+                    return Math.sqrt(dr * dr + dg * dg + db * db);
+                };
+
+                // BFS flood fill — 경계 픽셀에서 시작
+                const visited = new Uint8Array(w * h);
+                const queue = [];
+
+                for (let x = 0; x < w; x++) {
+                    queue.push(x, 0);
+                    queue.push(x, h - 1);
+                }
+                for (let y = 1; y < h - 1; y++) {
+                    queue.push(0, y);
+                    queue.push(w - 1, y);
+                }
+
+                let head = 0;
+                while (head < queue.length) {
+                    const x = queue[head++], y = queue[head++];
+                    const pi = y * w + x;
+                    if (visited[pi]) continue;
+                    visited[pi] = 1;
+
+                    if (colorDist(pi * 4) <= TOLERANCE) {
+                        data[pi * 4 + 3] = 0; // 투명화
+                        if (x > 0)     queue.push(x - 1, y);
+                        if (x < w - 1) queue.push(x + 1, y);
+                        if (y > 0)     queue.push(x, y - 1);
+                        if (y < h - 1) queue.push(x, y + 1);
+                    }
+                }
+
+                // 엣지 스무딩 — 투명 픽셀 경계에서 부드러운 알파 전환
+                const SOFT = TOLERANCE * 1.5;
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const pi = y * w + x, i4 = pi * 4;
+                        if (data[i4 + 3] === 0) continue;
+
+                        const adj =
+                            (x > 0     && data[(pi - 1) * 4 + 3] === 0) ||
+                            (x < w - 1 && data[(pi + 1) * 4 + 3] === 0) ||
+                            (y > 0     && data[(pi - w) * 4 + 3] === 0) ||
+                            (y < h - 1 && data[(pi + w) * 4 + 3] === 0);
+
+                        if (adj) {
+                            const d = colorDist(i4);
+                            if (d < SOFT) data[i4 + 3] = Math.round((d / SOFT) * 255);
+                        }
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                canvas.toBlob(blob => resolve(blob), 'image/png');
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('이미지 로딩 실패'));
+        };
+        img.src = url;
     });
 }
 

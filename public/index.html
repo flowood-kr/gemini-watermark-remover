@@ -65,7 +65,16 @@
           </button>
         </div>
       </div>
-      <p id="bgModeHint" class="hidden text-xs text-center text-amber-600/70 dark:text-amber-400/60 pt-2 px-4">
+      <!-- 배경 제거 서브모드 토글 -->
+      <div id="bgSubModeRow" class="hidden flex justify-center gap-1.5 pt-2 px-3">
+        <button id="bgSubModeColor" class="px-3 py-1 rounded-lg text-xs font-medium transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm">
+          🎨 색상 제거
+        </button>
+        <button id="bgSubModeAI" class="px-3 py-1 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          🤖 AI 제거
+        </button>
+      </div>
+      <p id="bgModeHint" class="hidden text-xs text-center text-amber-600/70 dark:text-amber-400/60 pt-1.5 px-4">
         ⚡ 첫 사용 시 AI 모델(~80MB)을 다운로드합니다. 이후에는 캐시됩니다.
       </p>
 
