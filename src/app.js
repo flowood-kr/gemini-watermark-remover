@@ -431,14 +431,16 @@ async function processSingle(item) {
 // 배경 제거 (동적 import — 첫 호출 시 ~60MB 모델 CDN 다운로드)
 // ──────────────────────────────────────────────
 async function runBackgroundRemoval(fileOrBlob) {
-    showLoading('AI 모델 로딩 중... (첫 사용 시 ~60MB 다운로드)');
+    showLoading('AI 모델 로딩 중... (첫 사용 시 ~80MB 다운로드)');
 
     const { removeBackground } = await import('@imgly/background-removal');
 
     return await removeBackground(fileOrBlob, {
         // publicPath 기본값: https://staticimgly.com/@imgly/background-removal-data/{버전}/dist/
         // npm 패키지와 별도 호스팅된 CDN — 명시하지 않아야 정상 동작
-        model: 'medium',
+        // model: 'large' = isnet (full precision) — rembg isnet-general-use와 동일 아키텍처
+        // model: 'medium' = isnet_fp16 (FP16 양자화, 품질 저하)
+        model: 'large',
         progress: (key, current, total) => {
             if (total > 0) {
                 const pct = Math.round((current / total) * 100);
