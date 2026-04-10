@@ -1,0 +1,12 @@
+{
+  "outputDirectory": "dist",
+  "buildCommand": "node build.js --prod",
+  "installCommand": "npm install -g pnpm@10.11.0 && pnpm install",
+  "framework": null,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
