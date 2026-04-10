@@ -539,15 +539,16 @@ async function handleUrlInput() {
 
 /**
  * URL에서 이미지를 File 객체로 가져옵니다.
- * 1차: fetch (CORS 허용 서버)
- * 2차: <img crossOrigin=anonymous> → canvas (CORS 헤더 있는 경우)
+ * 1차: 브라우저 fetch (CORS 허용 서버)
+ * 2차: <img crossOrigin=anonymous> → canvas
+ * 3차: 서버사이드 프록시 (/api/fetch-image) — Gemini 공유 링크 등 처리
  */
 async function fetchImageFromUrl(url) {
     // 파일명 추출 (쿼리스트링 제거)
     const rawName = new URL(url).pathname.split('/').pop() || 'image';
     const name = rawName.includes('.') ? rawName : rawName + '.jpg';
 
-    // 1차 시도: fetch
+    // 1차 시도: 브라우저 직접 fetch
     try {
         const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -555,40 +556,58 @@ async function fetchImageFromUrl(url) {
         if (!blob.type.startsWith('image/')) throw new Error('이미지 파일이 아닙니다.');
         return new File([blob], name, { type: blob.type });
     } catch (fetchErr) {
-        // CORS 거부 등 → 2차 시도
-        console.warn('fetch 실패, img 요소로 재시도:', fetchErr);
+        console.warn('1차(fetch) 실패, img 요소로 재시도:', fetchErr);
     }
 
     // 2차 시도: Image element → canvas
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        const timeout = setTimeout(() => {
-            reject(new Error('이미지 로딩 시간이 초과됐습니다.'));
-        }, 15000);
+    try {
+        const file = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            const timeout = setTimeout(() => {
+                reject(new Error('timeout'));
+            }, 8000);
 
-        img.onload = () => {
-            clearTimeout(timeout);
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                canvas.getContext('2d').drawImage(img, 0, 0);
-                canvas.toBlob((blob) => {
-                    if (!blob) return reject(new Error('이미지 변환에 실패했습니다.'));
-                    resolve(new File([blob], name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' }));
-                }, 'image/png');
-            } catch {
-                // canvas가 오염됨 (tainted) = CORS 없음
-                reject(new Error('이미지 서버가 외부 접근을 허용하지 않습니다. (CORS 제한)'));
-            }
-        };
-        img.onerror = () => {
-            clearTimeout(timeout);
-            reject(new Error('이미지를 불러올 수 없습니다. URL을 확인해 주세요.'));
-        };
-        img.src = url;
-    });
+            img.onload = () => {
+                clearTimeout(timeout);
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        if (!blob) return reject(new Error('blob 변환 실패'));
+                        resolve(new File([blob], name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' }));
+                    }, 'image/png');
+                } catch {
+                    reject(new Error('canvas tainted'));
+                }
+            };
+            img.onerror = () => { clearTimeout(timeout); reject(new Error('img load error')); };
+            img.src = url;
+        });
+        return file;
+    } catch (canvasErr) {
+        console.warn('2차(canvas) 실패, 서버 프록시로 재시도:', canvasErr);
+    }
+
+    // 3차 시도: 서버사이드 프록시 (Gemini 공유 링크 등 HTML 페이지 포함 처리)
+    const proxyUrl = `/api/fetch-image?url=${encodeURIComponent(url)}`;
+    const proxyRes = await fetch(proxyUrl);
+    if (!proxyRes.ok) {
+        let errMsg = `서버 오류 ${proxyRes.status}`;
+        try {
+            const body = await proxyRes.json();
+            if (body.error) errMsg = body.error;
+        } catch { /* ignore */ }
+        throw new Error(errMsg);
+    }
+    const contentType = (proxyRes.headers.get('content-type') || 'image/png').split(';')[0].trim();
+    if (!contentType.startsWith('image/')) {
+        throw new Error('이미지를 가져오지 못했습니다. URL을 확인해 주세요.');
+    }
+    const blob = await proxyRes.blob();
+    return new File([blob], name.replace(/\.[^.]+$/, '.png'), { type: contentType });
 }
 
 async function downloadAll() {
