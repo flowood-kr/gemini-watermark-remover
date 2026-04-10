@@ -436,7 +436,7 @@ async function runBackgroundRemoval(fileOrBlob) {
     const { removeBackground } = await import('@imgly/background-removal');
 
     return await removeBackground(fileOrBlob, {
-        publicPath: 'https://unpkg.com/@imgly/background-removal@1.7.0/dist/',
+        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/',
         model: 'medium',
         progress: (key, current, total) => {
             if (total > 0) {
