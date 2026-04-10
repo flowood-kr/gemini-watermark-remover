@@ -18,13 +18,16 @@ import {
 import JSZip from 'jszip';
 import mediumZoom from 'medium-zoom';
 
+// ──────────────────────────────────────────────
 // 전역 상태
+// ──────────────────────────────────────────────
 let enginePromise = null;
 let workerClient = null;
 let imageQueue = [];
 let processedCount = 0;
 let zoom = null;
 let currentSingleItem = null;
+let currentMode = 'watermark'; // 'watermark' | 'background'
 
 // DOM 참조
 const uploadArea = document.getElementById('uploadArea');
@@ -40,6 +43,9 @@ const originalInfo = document.getElementById('originalInfo');
 const processedInfo = document.getElementById('processedInfo');
 const downloadSection = document.getElementById('downloadSection');
 
+// ──────────────────────────────────────────────
+// 엔진 초기화
+// ──────────────────────────────────────────────
 async function getEngine() {
     if (!enginePromise) {
         enginePromise = WatermarkEngine.create().catch((error) => {
@@ -65,9 +71,9 @@ function disableWorkerClient(reason) {
     workerClient = null;
 }
 
-/**
- * 앱 초기화
- */
+// ──────────────────────────────────────────────
+// 앱 초기화
+// ──────────────────────────────────────────────
 async function init() {
     try {
         setupDarkMode();
@@ -99,7 +105,6 @@ async function init() {
             background: 'rgba(0, 0, 0, 0.6)',
         });
 
-        // loading 클래스 제거
         document.body.classList.remove('loading');
     } catch (error) {
         hideLoading();
@@ -108,10 +113,48 @@ async function init() {
     }
 }
 
-/**
- * 이벤트 리스너 설정
- */
+// ──────────────────────────────────────────────
+// 모드 토글 (워터마크 제거 / 배경 제거)
+// ──────────────────────────────────────────────
+function setupModeToggle() {
+    const btnWatermark = document.getElementById('modeWatermark');
+    const btnBgRemoval = document.getElementById('modeBgRemoval');
+    const bgHint = document.getElementById('bgModeHint');
+
+    const activeClasses = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
+    const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
+
+    function applyMode(mode) {
+        currentMode = mode;
+
+        if (mode === 'watermark') {
+            btnWatermark.classList.add(...activeClasses);
+            btnWatermark.classList.remove(...inactiveClasses);
+            btnBgRemoval.classList.remove(...activeClasses);
+            btnBgRemoval.classList.add(...inactiveClasses);
+        } else {
+            btnBgRemoval.classList.add(...activeClasses);
+            btnBgRemoval.classList.remove(...inactiveClasses);
+            btnWatermark.classList.remove(...activeClasses);
+            btnWatermark.classList.add(...inactiveClasses);
+        }
+
+        bgHint?.classList.toggle('hidden', mode !== 'background');
+
+        // 모드 전환 시 현재 작업 초기화
+        if (currentSingleItem) reset();
+    }
+
+    btnWatermark.addEventListener('click', () => applyMode('watermark'));
+    btnBgRemoval.addEventListener('click', () => applyMode('background'));
+}
+
+// ──────────────────────────────────────────────
+// 이벤트 리스너 설정
+// ──────────────────────────────────────────────
 function setupEventListeners() {
+    setupModeToggle();
+
     uploadArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
@@ -156,6 +199,33 @@ function setupEventListeners() {
         });
     });
 
+    // 배경도 제거하기 버튼 (워터마크 제거 완료 후 순차 실행)
+    document.getElementById('bgRemoveFromResultBtn').addEventListener('click', async () => {
+        if (!currentSingleItem?.processedBlob) return;
+        const btn = document.getElementById('bgRemoveFromResultBtn');
+        btn.disabled = true;
+        btn.textContent = '배경 제거 중...';
+        try {
+            const bgBlob = await runBackgroundRemoval(currentSingleItem.processedBlob);
+            if (currentSingleItem.processedUrl) URL.revokeObjectURL(currentSingleItem.processedUrl);
+            currentSingleItem.processedBlob = bgBlob;
+            currentSingleItem.processedUrl = URL.createObjectURL(bgBlob);
+            currentSingleItem.processedMeta = { mode: 'background' };
+
+            processedImage.src = currentSingleItem.processedUrl;
+            renderSingleProcessedMeta(currentSingleItem);
+            // 완료 후 버튼 숨김 (이미 배경 제거 완료)
+            btn.classList.add('hidden');
+            hideLoading();
+        } catch (err) {
+            hideLoading();
+            btn.disabled = false;
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> 배경도 제거하기`;
+            setStatusMessage('배경 제거 중 오류가 발생했습니다: ' + (err.message || ''));
+            console.error(err);
+        }
+    });
+
     // URL 입력으로 불러오기
     const urlInput = document.getElementById('urlInput');
     const urlSubmitBtn = document.getElementById('urlSubmitBtn');
@@ -163,7 +233,6 @@ function setupEventListeners() {
     urlInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') handleUrlInput();
     });
-    // 붙여넣기 시 자동 제출
     urlInput.addEventListener('paste', () => {
         setTimeout(() => {
             const val = urlInput.value.trim();
@@ -181,6 +250,9 @@ function setupEventListeners() {
     });
 }
 
+// ──────────────────────────────────────────────
+// 리셋
+// ──────────────────────────────────────────────
 function reset() {
     singlePreview.style.display = 'none';
     multiPreview.style.display = 'none';
@@ -192,15 +264,26 @@ function reset() {
     document.getElementById('urlInput').value = '';
     setUrlError('');
     setStatusMessage('');
+    // 배경 제거 버튼 초기화
+    const bgBtn = document.getElementById('bgRemoveFromResultBtn');
+    if (bgBtn) { bgBtn.classList.add('hidden'); bgBtn.disabled = false; }
     uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// ──────────────────────────────────────────────
+// 파일 처리
+// ──────────────────────────────────────────────
 function handleFileSelect(e) {
     handleFiles(Array.from(e.target.files));
 }
 
 function handleFiles(files) {
     setStatusMessage('');
+
+    // 배경 제거 모드: 1장만 지원
+    if (currentMode === 'background' && files.length > 1) {
+        files = files.slice(0, 1);
+    }
 
     const validFiles = files.filter(file => {
         if (!file.type.match('image/(jpeg|png|webp)')) return false;
@@ -210,7 +293,6 @@ function handleFiles(files) {
 
     if (validFiles.length === 0) return;
 
-    // 기존 Object URL 해제
     imageQueue.forEach(item => {
         if (item.originalUrl) URL.revokeObjectURL(item.originalUrl);
         if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
@@ -245,22 +327,34 @@ function handleFiles(files) {
     }
 }
 
+// ──────────────────────────────────────────────
+// 메타 표시
+// ──────────────────────────────────────────────
 function renderSingleImageMeta(item) {
     if (!item?.originalImg) return;
+
+    if (currentMode === 'background') {
+        originalInfo.innerHTML = `${item.originalImg.width}×${item.originalImg.height}`;
+        return;
+    }
+
     const watermarkInfo = resolveDisplayWatermarkInfo(item, getEstimatedWatermarkInfo(item));
     if (!watermarkInfo) return;
-    originalInfo.innerHTML =
-        `${item.originalImg.width}×${item.originalImg.height} · 워터마크 ${watermarkInfo.size}px`;
+    originalInfo.innerHTML = `${item.originalImg.width}×${item.originalImg.height} · 워터마크 ${watermarkInfo.size}px`;
 }
 
 function renderSingleProcessedMeta(item) {
     if (!item?.originalImg) return;
+
+    if (item.processedMeta?.mode === 'background') {
+        processedInfo.innerHTML = `${item.originalImg.width}×${item.originalImg.height} · ✓ 배경 제거됨`;
+        return;
+    }
+
     const watermarkInfo = resolveDisplayWatermarkInfo(item, getEstimatedWatermarkInfo(item));
     const removed = isConfirmedWatermarkDecision(item);
     const statusText = removed ? '✓ 워터마크 제거됨' : '원본 유지 (워터마크 미감지)';
-    processedInfo.innerHTML =
-        `${item.originalImg.width}×${item.originalImg.height}` +
-        (watermarkInfo && removed ? ` · ${statusText}` : ` · ${statusText}`);
+    processedInfo.innerHTML = `${item.originalImg.width}×${item.originalImg.height} · ${statusText}`;
 }
 
 function getCardStatusText(item) {
@@ -272,14 +366,13 @@ function getCardStatusText(item) {
     const watermarkInfo = resolveDisplayWatermarkInfo(item, getEstimatedWatermarkInfo(item));
     const removed = isConfirmedWatermarkDecision(item);
     let html = `${item.originalImg.width}×${item.originalImg.height}`;
-    if (watermarkInfo && removed) {
-        html += ` · ✓ 워터마크 제거됨`;
-    } else {
-        html += ` · 원본 유지`;
-    }
+    html += watermarkInfo && removed ? ' · ✓ 워터마크 제거됨' : ' · 원본 유지';
     return html;
 }
 
+// ──────────────────────────────────────────────
+// 단일 이미지 처리
+// ──────────────────────────────────────────────
 async function processSingle(item) {
     try {
         showLoading('처리 중...');
@@ -288,10 +381,21 @@ async function processSingle(item) {
         originalImage.src = img.src;
         renderSingleImageMeta(item);
 
-        const processed = await processImageWithBestPath(item.file, img);
-        item.processedMeta = processed.meta;
-        item.processedBlob = processed.blob;
-        item.processedUrl = URL.createObjectURL(processed.blob);
+        let processedBlob;
+
+        if (currentMode === 'background') {
+            // 배경 제거 모드
+            processedBlob = await runBackgroundRemoval(item.file);
+            item.processedMeta = { mode: 'background' };
+        } else {
+            // 워터마크 제거 모드
+            const processed = await processImageWithBestPath(item.file, img);
+            item.processedMeta = processed.meta;
+            processedBlob = processed.blob;
+        }
+
+        item.processedBlob = processedBlob;
+        item.processedUrl = URL.createObjectURL(processedBlob);
         currentSingleItem = item;
 
         processedImage.src = item.processedUrl;
@@ -301,23 +405,58 @@ async function processSingle(item) {
 
         renderSingleProcessedMeta(item);
         downloadSection.classList.remove('hidden');
-        hideLoading();
 
+        // 워터마크 제거 완료 후 "배경도 제거하기" 버튼 표시
+        const bgBtn = document.getElementById('bgRemoveFromResultBtn');
+        if (bgBtn) {
+            if (currentMode === 'watermark') {
+                bgBtn.classList.remove('hidden');
+                bgBtn.disabled = false;
+                bgBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> 배경도 제거하기`;
+            } else {
+                bgBtn.classList.add('hidden');
+            }
+        }
+
+        hideLoading();
         document.getElementById('comparisonContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
         hideLoading();
         console.error(error);
-        setStatusMessage('처리 중 오류가 발생했습니다.');
+        setStatusMessage('처리 중 오류가 발생했습니다: ' + (error.message || ''));
     }
 }
 
+// ──────────────────────────────────────────────
+// 배경 제거 (동적 import — 첫 호출 시 ~60MB 모델 CDN 다운로드)
+// ──────────────────────────────────────────────
+async function runBackgroundRemoval(fileOrBlob) {
+    showLoading('AI 모델 로딩 중... (첫 사용 시 ~60MB 다운로드)');
+
+    const { removeBackground } = await import('@imgly/background-removal');
+
+    return await removeBackground(fileOrBlob, {
+        publicPath: 'https://unpkg.com/@imgly/background-removal@1.7.0/dist/',
+        model: 'medium',
+        progress: (key, current, total) => {
+            if (total > 0) {
+                const pct = Math.round((current / total) * 100);
+                showLoading(`배경 제거 중... ${pct}%`);
+            }
+        },
+    });
+}
+
+// ──────────────────────────────────────────────
+// 다중 이미지 처리
+// ──────────────────────────────────────────────
 function createImageCard(item) {
     const card = document.createElement('div');
     card.id = `card-${item.id}`;
     card.className = 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden';
     card.innerHTML = `
         <div class="flex items-center gap-3 p-3">
-            <div class="w-20 h-16 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
+            <div class="w-20 h-16 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden checker-bg">
                 <img id="result-${item.id}" class="max-w-full max-h-full object-contain rounded" data-zoomable />
             </div>
             <div class="flex-1 min-w-0">
@@ -325,12 +464,8 @@ function createImageCard(item) {
                 <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" id="status-${item.id}">대기 중...</div>
             </div>
             <div class="flex-shrink-0 flex gap-2">
-                <button id="copy-${item.id}" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors">
-                    복사
-                </button>
-                <button id="download-${item.id}" class="hidden px-3 py-1.5 bg-gray-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors">
-                    다운로드
-                </button>
+                <button id="copy-${item.id}" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors">복사</button>
+                <button id="download-${item.id}" class="hidden px-3 py-1.5 bg-gray-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors">다운로드</button>
             </div>
         </div>
     `;
@@ -416,6 +551,52 @@ function updateProgress() {
     progressText.textContent = `처리 진행: ${processedCount} / ${imageQueue.length}`;
 }
 
+// ──────────────────────────────────────────────
+// 다운로드
+// ──────────────────────────────────────────────
+function isBgItem(item) {
+    return item?.processedMeta?.mode === 'background';
+}
+
+function downloadImage(item) {
+    const prefix = isBgItem(item) ? 'bg-removed' : 'unwatermarked';
+    const a = document.createElement('a');
+    a.href = item.processedUrl;
+    a.download = `${prefix}_${item.name.replace(/\.[^.]+$/, '')}.png`;
+    a.click();
+}
+
+async function downloadImageWithQuality(item, qualityPercent) {
+    if (!item.processedBlob) return;
+
+    const usePng = isBgItem(item); // 투명 배경은 PNG로 저장
+    const prefix = isBgItem(item) ? 'bg-removed' : 'unwatermarked';
+    const ext = usePng ? 'png' : 'jpg';
+    const mimeType = usePng ? 'image/png' : 'image/jpeg';
+    const quality = usePng ? undefined : 0.92;
+
+    const objectUrl = URL.createObjectURL(item.processedBlob);
+    const img = new Image();
+
+    img.onload = () => {
+        const scale = qualityPercent / 100;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            URL.revokeObjectURL(objectUrl);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${prefix}_${item.name.replace(/\.[^.]+$/, '')}_${qualityPercent}pct.${ext}`;
+            a.click();
+        }, mimeType, quality);
+    };
+
+    img.src = objectUrl;
+}
+
 async function copyToClipboard(item, btn) {
     if (!navigator.clipboard || !window.ClipboardItem) {
         setStatusMessage('브라우저가 클립보드 복사를 지원하지 않습니다.');
@@ -433,52 +614,31 @@ async function copyToClipboard(item, btn) {
     }
 }
 
-function downloadImage(item) {
+async function downloadAll() {
+    const completed = imageQueue.filter(item => item.status === 'completed');
+    if (completed.length === 0) return;
+
+    const zip = new JSZip();
+    completed.forEach(item => {
+        const prefix = isBgItem(item) ? 'bg-removed' : 'unwatermarked';
+        zip.file(`${prefix}_${item.name.replace(/\.[^.]+$/, '')}.png`, item.processedBlob);
+    });
+
+    const blob = await zip.generateAsync({ type: 'blob' });
     const a = document.createElement('a');
-    a.href = item.processedUrl;
-    a.download = `unwatermarked_${item.name.replace(/\.[^.]+$/, '')}.png`;
+    a.href = URL.createObjectURL(blob);
+    a.download = `images_${Date.now()}.zip`;
     a.click();
-}
-
-async function downloadImageWithQuality(item, qualityPercent) {
-    if (!item.processedBlob) return;
-
-    const objectUrl = URL.createObjectURL(item.processedBlob);
-    const img = new Image();
-
-    img.onload = () => {
-        const scale = qualityPercent / 100;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.naturalWidth * scale);
-        canvas.height = Math.round(img.naturalHeight * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob((blob) => {
-            URL.revokeObjectURL(objectUrl);
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `unwatermarked_${item.name.replace(/\.[^.]+$/, '')}_${qualityPercent}pct.jpg`;
-            a.click();
-        }, 'image/jpeg', 0.92);
-    };
-
-    img.src = objectUrl;
 }
 
 // ──────────────────────────────────────────────
 // URL 이미지 로딩
 // ──────────────────────────────────────────────
-
 function setUrlError(msg) {
     const el = document.getElementById('urlError');
     if (!el) return;
-    if (msg) {
-        el.textContent = msg;
-        el.classList.remove('hidden');
-    } else {
-        el.textContent = '';
-        el.classList.add('hidden');
-    }
+    if (msg) { el.textContent = msg; el.classList.remove('hidden'); }
+    else { el.textContent = ''; el.classList.add('hidden'); }
 }
 
 function setUrlLoading(loading) {
@@ -487,25 +647,15 @@ function setUrlLoading(loading) {
     if (!btn) return;
     if (loading) {
         btn.disabled = true;
-        btn.innerHTML = `
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-            </svg>
-            로딩 중...`;
+        btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> 로딩 중...`;
         input.disabled = true;
     } else {
         btn.disabled = false;
-        btn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-            </svg>
-            불러오기`;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> 불러오기`;
         input.disabled = false;
     }
 }
 
-/** Gemini 관련 URL 패턴 — 로그인 세션이 필요해 외부에서 접근 불가 */
 const GEMINI_URL_PATTERNS = [
     /^https?:\/\/(www\.)?gemini\.google\.com\//i,
     /^https?:\/\/g\.co\/gemini\//i,
@@ -523,7 +673,6 @@ async function handleUrlInput() {
 
     if (!url) return;
 
-    // URL 형식 검사
     let parsedUrl;
     try {
         parsedUrl = new URL(url);
@@ -536,12 +685,8 @@ async function handleUrlInput() {
         return;
     }
 
-    // Gemini URL 감지 → 즉시 안내 메시지
     if (isGeminiUrl(url)) {
-        setUrlError(
-            'Gemini 이미지는 Google 로그인 세션이 필요해서 URL로 직접 불러올 수 없습니다. ' +
-            '이미지를 우클릭 → [다른 이름으로 이미지 저장] 후 파일로 업로드해 주세요.'
-        );
+        setUrlError('Gemini 이미지는 Google 로그인 세션이 필요해서 URL로 직접 불러올 수 없습니다. 이미지를 우클릭 → [다른 이름으로 이미지 저장] 후 파일로 업로드해 주세요.');
         return;
     }
 
@@ -557,18 +702,11 @@ async function handleUrlInput() {
     }
 }
 
-/**
- * URL에서 이미지를 File 객체로 가져옵니다.
- * 1차: 브라우저 fetch (CORS 허용 서버)
- * 2차: <img crossOrigin=anonymous> → canvas
- * 3차: 서버사이드 프록시 (/api/fetch-image) — Gemini 공유 링크 등 처리
- */
 async function fetchImageFromUrl(url) {
-    // 파일명 추출 (쿼리스트링 제거)
     const rawName = new URL(url).pathname.split('/').pop() || 'image';
     const name = rawName.includes('.') ? rawName : rawName + '.jpg';
 
-    // 1차 시도: 브라우저 직접 fetch
+    // 1차: 브라우저 직접 fetch
     try {
         const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -576,18 +714,15 @@ async function fetchImageFromUrl(url) {
         if (!blob.type.startsWith('image/')) throw new Error('이미지 파일이 아닙니다.');
         return new File([blob], name, { type: blob.type });
     } catch (fetchErr) {
-        console.warn('1차(fetch) 실패, img 요소로 재시도:', fetchErr);
+        console.warn('1차(fetch) 실패:', fetchErr);
     }
 
-    // 2차 시도: Image element → canvas
+    // 2차: img + canvas
     try {
         const file = await new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            const timeout = setTimeout(() => {
-                reject(new Error('timeout'));
-            }, 8000);
-
+            const timeout = setTimeout(() => reject(new Error('timeout')), 8000);
             img.onload = () => {
                 clearTimeout(timeout);
                 try {
@@ -599,53 +734,33 @@ async function fetchImageFromUrl(url) {
                         if (!blob) return reject(new Error('blob 변환 실패'));
                         resolve(new File([blob], name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' }));
                     }, 'image/png');
-                } catch {
-                    reject(new Error('canvas tainted'));
-                }
+                } catch { reject(new Error('canvas tainted')); }
             };
             img.onerror = () => { clearTimeout(timeout); reject(new Error('img load error')); };
             img.src = url;
         });
         return file;
     } catch (canvasErr) {
-        console.warn('2차(canvas) 실패, 서버 프록시로 재시도:', canvasErr);
+        console.warn('2차(canvas) 실패:', canvasErr);
     }
 
-    // 3차 시도: 서버사이드 프록시 (Gemini 공유 링크 등 HTML 페이지 포함 처리)
+    // 3차: 서버 프록시
     const proxyUrl = `/api/fetch-image?url=${encodeURIComponent(url)}`;
     const proxyRes = await fetch(proxyUrl);
     if (!proxyRes.ok) {
         let errMsg = `서버 오류 ${proxyRes.status}`;
-        try {
-            const body = await proxyRes.json();
-            if (body.error) errMsg = body.error;
-        } catch { /* ignore */ }
+        try { const body = await proxyRes.json(); if (body.error) errMsg = body.error; } catch { /* ignore */ }
         throw new Error(errMsg);
     }
     const contentType = (proxyRes.headers.get('content-type') || 'image/png').split(';')[0].trim();
-    if (!contentType.startsWith('image/')) {
-        throw new Error('이미지를 가져오지 못했습니다. URL을 확인해 주세요.');
-    }
+    if (!contentType.startsWith('image/')) throw new Error('이미지를 가져오지 못했습니다. URL을 확인해 주세요.');
     const blob = await proxyRes.blob();
     return new File([blob], name.replace(/\.[^.]+$/, '.png'), { type: contentType });
 }
 
-async function downloadAll() {
-    const completed = imageQueue.filter(item => item.status === 'completed');
-    if (completed.length === 0) return;
-
-    const zip = new JSZip();
-    completed.forEach(item => {
-        zip.file(`unwatermarked_${item.name.replace(/\.[^.]+$/, '')}.png`, item.processedBlob);
-    });
-
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `unwatermarked_${Date.now()}.zip`;
-    a.click();
-}
-
+// ──────────────────────────────────────────────
+// 다크모드 / 슬라이더
+// ──────────────────────────────────────────────
 function setupDarkMode() {
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
@@ -684,7 +799,6 @@ function setupSlider() {
     container.addEventListener('mousedown', (e) => { isDown = true; move(e); });
     window.addEventListener('mouseup', () => { isDown = false; });
     window.addEventListener('mousemove', move);
-
     container.addEventListener('touchstart', (e) => { isDown = true; move(e); }, { passive: true });
     window.addEventListener('touchend', () => { isDown = false; });
     window.addEventListener('touchmove', move, { passive: true });

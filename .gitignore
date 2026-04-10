@@ -27,3 +27,4 @@ src/assets/samples/*-fix.*
 src/assets/samples/fix/
 .omx/
 docs/superpowers/
+.vercel

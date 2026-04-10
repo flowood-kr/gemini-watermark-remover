@@ -167,10 +167,16 @@ async function serveStaticDevDist(rootDir = 'dist', defaultPort = 4173) {
 }
 
 // Build website - app.js
+// splitting: true + format: 'esm' 으로 동적 import 청크 지원
+// (@imgly/background-removal 지연 로딩을 위해 필요)
 const websiteCtx = await esbuild.context({
   ...commonConfig,
   entryPoints: ['src/app.js'],
-  outfile: 'dist/app.js',
+  outdir: 'dist',
+  entryNames: '[name]',
+  chunkNames: 'chunks/[name]-[hash]',
+  splitting: true,
+  format: 'esm',
   platform: 'browser',
   target: ['es2020'],
   banner: { js: jsBanner },
@@ -232,6 +238,7 @@ console.log(`🚀 Starting build process... [${isProd ? 'PRODUCTION' : 'DEVELOPM
 if (existsSync('dist')) rmSync('dist', { recursive: true });
 mkdirSync('dist/userscript', { recursive: true });
 mkdirSync('dist/workers', { recursive: true });
+mkdirSync('dist/chunks', { recursive: true });
 
 if (isProd) {
   await Promise.all([
