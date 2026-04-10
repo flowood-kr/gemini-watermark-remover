@@ -505,6 +505,17 @@ function setUrlLoading(loading) {
     }
 }
 
+/** Gemini 관련 URL 패턴 — 로그인 세션이 필요해 외부에서 접근 불가 */
+const GEMINI_URL_PATTERNS = [
+    /^https?:\/\/(www\.)?gemini\.google\.com\//i,
+    /^https?:\/\/g\.co\/gemini\//i,
+    /^https?:\/\/googleusercontent\.com\/image_generation_content\//i,
+];
+
+function isGeminiUrl(url) {
+    return GEMINI_URL_PATTERNS.some(re => re.test(url));
+}
+
 async function handleUrlInput() {
     const urlInput = document.getElementById('urlInput');
     const url = urlInput.value.trim();
@@ -512,7 +523,7 @@ async function handleUrlInput() {
 
     if (!url) return;
 
-    // 간단한 URL 형식 검사
+    // URL 형식 검사
     let parsedUrl;
     try {
         parsedUrl = new URL(url);
@@ -522,6 +533,15 @@ async function handleUrlInput() {
         }
     } catch {
         setUrlError('올바른 URL 형식이 아닙니다.');
+        return;
+    }
+
+    // Gemini URL 감지 → 즉시 안내 메시지
+    if (isGeminiUrl(url)) {
+        setUrlError(
+            'Gemini 이미지는 Google 로그인 세션이 필요해서 URL로 직접 불러올 수 없습니다. ' +
+            '이미지를 우클릭 → [다른 이름으로 이미지 저장] 후 파일로 업로드해 주세요.'
+        );
         return;
     }
 
