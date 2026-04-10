@@ -436,7 +436,8 @@ async function runBackgroundRemoval(fileOrBlob) {
     const { removeBackground } = await import('@imgly/background-removal');
 
     return await removeBackground(fileOrBlob, {
-        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/',
+        // publicPath 기본값: https://staticimgly.com/@imgly/background-removal-data/{버전}/dist/
+        // npm 패키지와 별도 호스팅된 CDN — 명시하지 않아야 정상 동작
         model: 'medium',
         progress: (key, current, total) => {
             if (total > 0) {
