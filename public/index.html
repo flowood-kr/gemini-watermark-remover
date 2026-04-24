@@ -63,6 +63,9 @@
           <button id="modeBgRemoval" class="mode-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
             배경 제거
           </button>
+          <button id="modePdf" class="mode-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+            📄 PDF 도구
+          </button>
         </div>
       </div>
       <!-- 배경 제거 서브모드 토글 -->
@@ -78,7 +81,17 @@
         ⚡ 첫 사용 시 AI 모델(~80MB)을 다운로드합니다. 이후에는 캐시됩니다.
       </p>
 
-      <!-- 파일 드래그앤드랍 -->
+      <!-- PDF 서브모드 토글 -->
+      <div id="pdfSubModeRow" class="hidden flex justify-center gap-1.5 pt-2 px-3">
+        <button id="pdfSubModeConvert" class="px-3 py-1 rounded-lg text-xs font-medium transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm">
+          🖼️ 이미지 변환
+        </button>
+        <button id="pdfSubModeEdit" class="px-3 py-1 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          ✂️ 페이지 편집
+        </button>
+      </div>
+
+      <!-- 파일 드래그앤드랍 (이미지 모드) -->
       <div id="uploadArea" class="group flex flex-col items-center justify-center h-44 cursor-pointer border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary rounded-xl m-3 transition-all hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
         <svg class="w-9 h-9 text-gray-300 dark:text-gray-600 group-hover:text-primary mb-2.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -88,15 +101,25 @@
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple class="hidden" />
       </div>
 
-      <!-- 구분선 -->
-      <div class="flex items-center gap-3 px-4 pb-1">
+      <!-- 파일 드래그앤드랍 (PDF 모드) -->
+      <div id="pdfUploadArea" class="hidden group flex flex-col items-center justify-center h-44 cursor-pointer border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary rounded-xl m-3 transition-all hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
+        <svg class="w-9 h-9 text-gray-300 dark:text-gray-600 group-hover:text-primary mb-2.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">클릭하거나 PDF 파일을 드래그하세요</p>
+        <p class="text-xs text-gray-400 dark:text-gray-600 mt-1">PDF · 최대 50MB</p>
+        <input type="file" id="pdfFileInput" accept="application/pdf" class="hidden" />
+      </div>
+
+      <!-- 구분선 (이미지 모드에서만 표시) -->
+      <div id="imageUrlDivider" class="flex items-center gap-3 px-4 pb-1">
         <div class="flex-1 h-px bg-gray-100 dark:bg-gray-800"></div>
         <span class="text-xs text-gray-400 dark:text-gray-600 font-medium">또는</span>
         <div class="flex-1 h-px bg-gray-100 dark:bg-gray-800"></div>
       </div>
 
-      <!-- URL 입력 -->
-      <div class="px-3 pb-3 pt-2">
+      <!-- URL 입력 (이미지 모드) -->
+      <div id="urlInputBlock" class="px-3 pb-3 pt-2">
         <div class="flex gap-2">
           <div class="relative flex-1">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,6 +234,84 @@
         </div>
       </div>
       <div id="imageList" class="space-y-3"></div>
+    </section>
+
+    <!-- PDF 이미지 변환 섹션 -->
+    <section id="pdfConvertSection" class="hidden space-y-4">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span id="pdfConvertFileName"></span>
+            <span id="pdfConvertPageCount" class="text-xs text-gray-400 ml-2"></span>
+          </span>
+          <button id="pdfConvertResetBtn" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            다시 선택
+          </button>
+        </div>
+
+        <!-- 옵션: 포맷 / 해상도 -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">포맷</label>
+            <div class="inline-flex w-full rounded-xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+              <button data-pdf-format="png" class="pdf-format-btn flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm">PNG (무손실)</button>
+              <button data-pdf-format="jpeg" class="pdf-format-btn flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400">JPG (용량 작음)</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">해상도 (DPI)</label>
+            <div class="inline-flex w-full rounded-xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+              <button data-pdf-dpi="150" class="pdf-dpi-btn flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400">150</button>
+              <button data-pdf-dpi="300" class="pdf-dpi-btn flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm">300</button>
+              <button data-pdf-dpi="600" class="pdf-dpi-btn flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400">600</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="pdfConvertRunBtn" class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          이미지로 변환
+        </button>
+        <p id="pdfConvertProgress" class="text-xs text-gray-400 dark:text-gray-500 text-center hidden"></p>
+      </div>
+
+      <!-- 변환 결과 갤러리 -->
+      <div id="pdfConvertResults" class="hidden space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="pdfConvertResultsInfo" class="text-sm font-medium text-gray-600 dark:text-gray-400"></span>
+          <button id="pdfConvertDownloadAll" class="py-2 px-4 bg-gray-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            전체 ZIP 다운로드
+          </button>
+        </div>
+        <div id="pdfConvertGallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+      </div>
+    </section>
+
+    <!-- PDF 페이지 편집 섹션 -->
+    <section id="pdfEditSection" class="hidden space-y-4">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span id="pdfEditFileName"></span>
+            <span id="pdfEditPageCount" class="text-xs text-gray-400 ml-2"></span>
+          </span>
+          <button id="pdfEditResetBtn" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            다시 선택
+          </button>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          💡 페이지를 드래그해 순서를 바꾸거나, × 버튼으로 삭제하세요. 저장 시 원본 화질 그대로 유지됩니다.
+        </p>
+        <button id="pdfEditSaveBtn" class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          편집된 PDF 저장
+        </button>
+      </div>
+
+      <div id="pdfEditGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
     </section>
 
   </main>

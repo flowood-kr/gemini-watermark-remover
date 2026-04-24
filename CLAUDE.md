@@ -12,14 +12,15 @@ GargantuaX의 오픈소스 Gemini 워터마크 제거 도구를 포크하여 한
 
 ```
 src/
-  app.js                  # 메인 UI 진입점 (모드 토글, 이벤트, 배경 제거 포함)
+  app.js                  # 메인 UI 진입점 (모드 토글, 이벤트, 배경 제거, PDF 도구 포함)
   core/                   # 워터마크 엔진 (역 알파 블렌딩 알고리즘)
+  pdf/                    # PDF 도구 모듈 (pdfToImages, pdfEditor) — 동적 import
   userscript/             # Tampermonkey 유저스크립트 (Gemini 페이지 자동 처리)
   sdk/                    # SDK 진입점 (browser / node / image-data)
   workers/                # Web Worker (watermarkWorker.js)
   cli/                    # CLI (gwrCli.js, gwrRemoveCommand.js)
   shared/                 # 공용 유틸 (imageProcessing, domAdapter 등)
-  i18n/                   # 다국어 (ko-KR, en-US, zh-CN, pt-BR)
+  i18n/                   # 다국어 (ko-KR, en-US, zh-CN, pt-BR) — userscript 전용
 api/
   fetch-image.js          # Vercel Serverless Function — 이미지 CORS 프록시
 bin/
@@ -39,6 +40,8 @@ dist/                     # 빌드 산출물 (git 제외)
 | 배경 제거 — 색상 | BFS flood fill 방식 | `src/app.js` setupBgSubModeToggle |
 | 배경 제거 — AI | @imgly/background-removal (isnet 모델) | `src/app.js` |
 | 이미지 용량 축소 다운로드 | 다운로드 시 압축 적용 | `src/app.js` |
+| PDF → 이미지 변환 | pdfjs-dist 기반, PNG/JPG + 150/300/600 DPI, ZIP 다운로드 | `src/pdf/pdfToImages.js` |
+| PDF 페이지 편집 | pdf-lib 기반, 드래그 재정렬 + 삭제, 무손실 재저장 | `src/pdf/pdfEditor.js` |
 
 ## 배포
 
@@ -73,6 +76,8 @@ pnpm benchmark:samples  # 샘플 벤치마크
 | 패키지 | 용도 |
 |--------|------|
 | `@imgly/background-removal` ^1.7.0 | AI 배경 제거 (isnet 모델, CDN: jsDelivr) |
+| `pdfjs-dist` ^5.6.205 | PDF 렌더링 (이미지 변환, 워커: jsDelivr CDN) |
+| `pdf-lib` ^1.17.1 | PDF 편집 (페이지 재정렬/삭제 무손실 재저장) |
 | `jszip` ^3.10.1 | ZIP 다운로드 |
 | `medium-zoom` ^1.1.0 | 이미지 줌 |
 | `sharp` ^0.34.5 | Node.js 이미지 처리 (CLI/SDK) |
@@ -94,11 +99,19 @@ pnpm build
 - **CDN**: jsDelivr 기본 (`staticimgly.com`) — `publicPath` 제거 후 기본값 사용
 - **서브모드**: `color` (BFS flood fill, 빠름) / `ai` (@imgly/background-removal, 고품질)
 
+## PDF 도구 설정
+
+- **워커 CDN**: `https://cdn.jsdelivr.net/npm/pdfjs-dist@{version}/build/pdf.worker.min.mjs` — 설치된 pdfjs 버전과 자동 일치
+- **파일 크기 제한**: 50MB (`PDF_MAX_BYTES` in `src/app.js`)
+- **편집 무손실 원칙**: pdf-lib `copyPages`로 원본 페이지 바이트 그대로 복사 — 화질 손실 없음
+- **청크 분리**: `src/pdf/*`, `pdfjs-dist`, `pdf-lib` 모두 동적 import → 초기 번들 영향 없음
+
 ## 코드 작업 체크리스트
 
 - [ ] 배경 제거 AI 모드: CDN 로딩 오류 시 jsDelivr 기본값 확인 (publicPath 설정 금지)
 - [ ] URL 프록시(`api/fetch-image.js`): SSRF 방지 — http/https만 허용, 25MB 제한 유지
 - [ ] 빌드 후 `dist/` 디렉토리 존재 확인 (`pnpm build` 성공 여부)
+- [ ] PDF 모드: 청크 분리 확인 (`dist/chunks/pdf-*.js`, `dist-*.js` 존재)
 - [ ] Vercel 자동 배포 확인 (main 푸시 시 CI 트리거)
 - [ ] 업스트림 변경 병합 시 한국어 UI 커스텀 파일 충돌 확인
 

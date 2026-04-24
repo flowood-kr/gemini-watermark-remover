@@ -27,8 +27,19 @@ let imageQueue = [];
 let processedCount = 0;
 let zoom = null;
 let currentSingleItem = null;
-let currentMode = 'watermark'; // 'watermark' | 'background'
-let bgSubMode = 'color';      // 'color' | 'ai'  (배경 제거 서브모드)
+let currentMode = 'watermark';  // 'watermark' | 'background' | 'pdf'
+let bgSubMode = 'color';        // 'color' | 'ai'       (배경 제거 서브모드)
+let pdfSubMode = 'convert';     // 'convert' | 'edit'   (PDF 서브모드)
+
+// PDF 상태
+let currentPdfFile = null;        // 업로드된 PDF File
+let currentPdfArrayBuffer = null; // PDF 바이트 (편집 모드용 복사본)
+let pdfConvertFormat = 'png';     // 'png' | 'jpeg'
+let pdfConvertDpi = 300;          // 150 | 300 | 600
+let pdfConvertResults = [];       // [{ pageNumber, blob, url }]
+let pdfEditor = null;             // PdfEditor 인스턴스
+let pdfEditThumbnails = [];       // [{ originalIndex, url }] — 0-based 원본 페이지 인덱스 기준
+const PDF_MAX_BYTES = 50 * 1024 * 1024;
 
 // DOM 참조
 const uploadArea = document.getElementById('uploadArea');
@@ -115,40 +126,62 @@ async function init() {
 }
 
 // ──────────────────────────────────────────────
-// 모드 토글 (워터마크 제거 / 배경 제거)
+// 모드 토글 (워터마크 제거 / 배경 제거 / PDF 도구)
 // ──────────────────────────────────────────────
 function setupModeToggle() {
     const btnWatermark = document.getElementById('modeWatermark');
     const btnBgRemoval = document.getElementById('modeBgRemoval');
+    const btnPdf       = document.getElementById('modePdf');
     const bgSubModeRow = document.getElementById('bgSubModeRow');
+    const pdfSubModeRow = document.getElementById('pdfSubModeRow');
+    const pdfUploadArea = document.getElementById('pdfUploadArea');
+    const imageUrlDivider = document.getElementById('imageUrlDivider');
+    const urlInputBlock = document.getElementById('urlInputBlock');
 
     const activeClasses = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
     const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
 
+    function setActive(btn, active) {
+        if (active) {
+            btn.classList.add(...activeClasses);
+            btn.classList.remove(...inactiveClasses);
+        } else {
+            btn.classList.remove(...activeClasses);
+            btn.classList.add(...inactiveClasses);
+        }
+    }
+
     function applyMode(mode) {
+        // 모드 전환 시 모든 작업 상태 초기화
+        reset();
         currentMode = mode;
 
-        if (mode === 'watermark') {
-            btnWatermark.classList.add(...activeClasses);
-            btnWatermark.classList.remove(...inactiveClasses);
-            btnBgRemoval.classList.remove(...activeClasses);
-            btnBgRemoval.classList.add(...inactiveClasses);
-            bgSubModeRow?.classList.add('hidden');
-        } else {
-            btnBgRemoval.classList.add(...activeClasses);
-            btnBgRemoval.classList.remove(...inactiveClasses);
-            btnWatermark.classList.remove(...activeClasses);
-            btnWatermark.classList.add(...inactiveClasses);
-            bgSubModeRow?.classList.remove('hidden');
-            applyBgSubMode('color'); // 배경 제거 진입 시 색상 모드 기본값
-        }
+        setActive(btnWatermark, mode === 'watermark');
+        setActive(btnBgRemoval, mode === 'background');
+        setActive(btnPdf,       mode === 'pdf');
 
-        // 모드 전환 시 현재 작업 초기화
-        if (currentSingleItem) reset();
+        bgSubModeRow?.classList.toggle('hidden', mode !== 'background');
+        pdfSubModeRow?.classList.toggle('hidden', mode !== 'pdf');
+
+        // 업로드 영역 교체: PDF 모드는 PDF 입력 / 이미지 모드는 이미지 입력
+        if (mode === 'pdf') {
+            uploadArea.classList.add('hidden');
+            pdfUploadArea.classList.remove('hidden');
+            imageUrlDivider?.classList.add('hidden');
+            urlInputBlock?.classList.add('hidden');
+            applyPdfSubMode('convert');
+        } else {
+            uploadArea.classList.remove('hidden');
+            pdfUploadArea.classList.add('hidden');
+            imageUrlDivider?.classList.remove('hidden');
+            urlInputBlock?.classList.remove('hidden');
+            if (mode === 'background') applyBgSubMode('color');
+        }
     }
 
     btnWatermark.addEventListener('click', () => applyMode('watermark'));
     btnBgRemoval.addEventListener('click', () => applyMode('background'));
+    btnPdf.addEventListener('click',       () => applyMode('pdf'));
 }
 
 // ──────────────────────────────────────────────
@@ -188,37 +221,98 @@ function applyBgSubMode(subMode) {
 }
 
 // ──────────────────────────────────────────────
+// PDF 서브모드 토글 (이미지 변환 / 페이지 편집)
+// ──────────────────────────────────────────────
+function setupPdfSubModeToggle() {
+    const btnConvert = document.getElementById('pdfSubModeConvert');
+    const btnEdit    = document.getElementById('pdfSubModeEdit');
+
+    if (btnConvert) btnConvert.addEventListener('click', () => applyPdfSubMode('convert'));
+    if (btnEdit)    btnEdit.addEventListener('click',    () => applyPdfSubMode('edit'));
+}
+
+function applyPdfSubMode(subMode) {
+    pdfSubMode = subMode;
+
+    const btnConvert = document.getElementById('pdfSubModeConvert');
+    const btnEdit    = document.getElementById('pdfSubModeEdit');
+
+    const activeClasses   = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
+    const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
+
+    if (subMode === 'convert') {
+        btnConvert?.classList.add(...activeClasses);
+        btnConvert?.classList.remove(...inactiveClasses);
+        btnEdit?.classList.remove(...activeClasses);
+        btnEdit?.classList.add(...inactiveClasses);
+    } else {
+        btnEdit?.classList.add(...activeClasses);
+        btnEdit?.classList.remove(...inactiveClasses);
+        btnConvert?.classList.remove(...activeClasses);
+        btnConvert?.classList.add(...inactiveClasses);
+    }
+
+    // 서브모드 전환 시 현재 PDF는 유지하되 해당 뷰로 라우팅
+    if (currentPdfFile) {
+        if (subMode === 'convert') {
+            showPdfConvertSection();
+        } else {
+            showPdfEditSection();
+        }
+    }
+}
+
+// ──────────────────────────────────────────────
 // 이벤트 리스너 설정
 // ──────────────────────────────────────────────
 function setupEventListeners() {
     setupModeToggle();
     setupBgSubModeToggle();
+    setupPdfSubModeToggle();
+    setupPdfHandlers();
 
     uploadArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
-    // 드래그 앤 드롭
+    // 드래그 앤 드롭 — 현재 모드에 맞는 업로드 영역 하이라이트
+    const activeUploadArea = () => (currentMode === 'pdf'
+        ? document.getElementById('pdfUploadArea')
+        : uploadArea);
+
+    // PDF 편집 그리드 내부 드래그(페이지 재정렬)는 업로드 하이라이트와 파일 드롭 무시
+    const isPdfEditDrag = (e) => !!(e.target?.closest && e.target.closest('#pdfEditGrid'));
+
     document.addEventListener('dragover', (e) => {
+        if (isPdfEditDrag(e)) return;
         e.preventDefault();
-        uploadArea.classList.add('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
+        activeUploadArea().classList.add('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
     });
 
     document.addEventListener('dragleave', (e) => {
+        if (isPdfEditDrag(e)) return;
         if (e.clientX === 0 && e.clientY === 0) {
-            uploadArea.classList.remove('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
+            activeUploadArea().classList.remove('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
         }
     });
 
     document.addEventListener('drop', (e) => {
+        if (isPdfEditDrag(e)) return;
         e.preventDefault();
-        uploadArea.classList.remove('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
-        if (e.dataTransfer.files?.length > 0) {
-            handleFiles(Array.from(e.dataTransfer.files));
+        activeUploadArea().classList.remove('border-primary', '!bg-emerald-50/60', 'dark:!bg-emerald-900/20');
+        if (!e.dataTransfer.files?.length) return;
+
+        const files = Array.from(e.dataTransfer.files);
+        if (currentMode === 'pdf') {
+            const pdf = files.find(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+            if (pdf) handlePdfFile(pdf);
+        } else {
+            handleFiles(files);
         }
     });
 
-    // 클립보드 붙여넣기
+    // 클립보드 붙여넣기 (이미지 모드 전용)
     document.addEventListener('paste', (e) => {
+        if (currentMode === 'pdf') return;
         const files = [];
         for (const item of e.clipboardData.items) {
             if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -302,13 +396,19 @@ function reset() {
     processedCount = 0;
     currentSingleItem = null;
     fileInput.value = '';
-    document.getElementById('urlInput').value = '';
+    const urlInputEl = document.getElementById('urlInput');
+    if (urlInputEl) urlInputEl.value = '';
     setUrlError('');
     setStatusMessage('');
     // 배경 제거 버튼 초기화
     const bgBtn = document.getElementById('bgRemoveFromResultBtn');
     if (bgBtn) { bgBtn.classList.add('hidden'); bgBtn.disabled = false; }
-    uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // PDF 상태 초기화
+    resetPdfState();
+    const scrollTarget = currentMode === 'pdf'
+        ? document.getElementById('pdfUploadArea')
+        : uploadArea;
+    scrollTarget?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ──────────────────────────────────────────────
@@ -320,6 +420,9 @@ function handleFileSelect(e) {
 
 function handleFiles(files) {
     setStatusMessage('');
+
+    // PDF 모드에서는 이미지 핸들러를 타지 않음
+    if (currentMode === 'pdf') return;
 
     // 배경 제거 모드: 1장만 지원
     if (currentMode === 'background' && files.length > 1) {
@@ -952,6 +1055,364 @@ function setupSlider() {
     container.addEventListener('touchstart', (e) => { isDown = true; move(e); }, { passive: true });
     window.addEventListener('touchend', () => { isDown = false; });
     window.addEventListener('touchmove', move, { passive: true });
+}
+
+// ──────────────────────────────────────────────
+// PDF 도구 — 핸들러
+// ──────────────────────────────────────────────
+function setupPdfHandlers() {
+    const pdfUploadArea = document.getElementById('pdfUploadArea');
+    const pdfFileInput  = document.getElementById('pdfFileInput');
+
+    pdfUploadArea.addEventListener('click', () => pdfFileInput.click());
+    pdfFileInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) handlePdfFile(file);
+    });
+
+    // 포맷 / DPI 버튼
+    document.querySelectorAll('.pdf-format-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            pdfConvertFormat = btn.dataset.pdfFormat;
+            updatePdfOptionButtons();
+        });
+    });
+    document.querySelectorAll('.pdf-dpi-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            pdfConvertDpi = parseInt(btn.dataset.pdfDpi, 10);
+            updatePdfOptionButtons();
+        });
+    });
+
+    document.getElementById('pdfConvertRunBtn').addEventListener('click', runPdfConvert);
+    document.getElementById('pdfConvertResetBtn').addEventListener('click', reset);
+    document.getElementById('pdfConvertDownloadAll').addEventListener('click', downloadAllPdfImages);
+
+    document.getElementById('pdfEditSaveBtn').addEventListener('click', savePdfEdit);
+    document.getElementById('pdfEditResetBtn').addEventListener('click', reset);
+}
+
+function updatePdfOptionButtons() {
+    const activeClasses   = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
+    const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
+
+    document.querySelectorAll('.pdf-format-btn').forEach(btn => {
+        const active = btn.dataset.pdfFormat === pdfConvertFormat;
+        btn.classList.toggle('bg-white', active);
+        btn.classList.toggle('dark:bg-gray-700', active);
+        btn.classList.toggle('text-gray-800', active);
+        btn.classList.toggle('dark:text-gray-100', active);
+        btn.classList.toggle('shadow-sm', active);
+        btn.classList.toggle('text-gray-500', !active);
+        btn.classList.toggle('dark:text-gray-400', !active);
+    });
+    document.querySelectorAll('.pdf-dpi-btn').forEach(btn => {
+        const active = parseInt(btn.dataset.pdfDpi, 10) === pdfConvertDpi;
+        btn.classList.toggle('bg-white', active);
+        btn.classList.toggle('dark:bg-gray-700', active);
+        btn.classList.toggle('text-gray-800', active);
+        btn.classList.toggle('dark:text-gray-100', active);
+        btn.classList.toggle('shadow-sm', active);
+        btn.classList.toggle('text-gray-500', !active);
+        btn.classList.toggle('dark:text-gray-400', !active);
+    });
+    // activeClasses/inactiveClasses 참조만 유지 (린트 대응)
+    void activeClasses; void inactiveClasses;
+}
+
+function resetPdfState() {
+    currentPdfFile = null;
+    currentPdfArrayBuffer = null;
+    pdfConvertResults.forEach(r => r.url && URL.revokeObjectURL(r.url));
+    pdfConvertResults = [];
+    pdfEditThumbnails.forEach(t => t.url && URL.revokeObjectURL(t.url));
+    pdfEditThumbnails = [];
+    pdfEditor = null;
+
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    if (pdfFileInput) pdfFileInput.value = '';
+
+    document.getElementById('pdfConvertSection')?.classList.add('hidden');
+    document.getElementById('pdfEditSection')?.classList.add('hidden');
+    document.getElementById('pdfConvertResults')?.classList.add('hidden');
+    document.getElementById('pdfConvertGallery').innerHTML = '';
+    document.getElementById('pdfEditGrid').innerHTML = '';
+    const progress = document.getElementById('pdfConvertProgress');
+    if (progress) { progress.textContent = ''; progress.classList.add('hidden'); }
+}
+
+async function handlePdfFile(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+        setStatusMessage('PDF 파일만 업로드 가능합니다.');
+        return;
+    }
+    if (file.size > PDF_MAX_BYTES) {
+        setStatusMessage(`PDF는 최대 ${Math.floor(PDF_MAX_BYTES / 1024 / 1024)}MB까지 지원합니다.`);
+        return;
+    }
+
+    try {
+        showLoading('PDF 로딩 중...');
+        const arrayBuffer = await file.arrayBuffer();
+        currentPdfFile = file;
+        currentPdfArrayBuffer = arrayBuffer;
+
+        if (pdfSubMode === 'convert') {
+            await showPdfConvertSection();
+        } else {
+            await showPdfEditSection();
+        }
+        hideLoading();
+    } catch (err) {
+        hideLoading();
+        console.error(err);
+        setStatusMessage('PDF 로딩 실패: ' + (err.message || ''));
+        resetPdfState();
+    }
+}
+
+async function showPdfConvertSection() {
+    if (!currentPdfFile || !currentPdfArrayBuffer) return;
+    const { loadPdfDocument } = await import('./pdf/pdfToImages.js');
+    const pdfDoc = await loadPdfDocument(currentPdfArrayBuffer);
+    const pageCount = pdfDoc.numPages;
+    pdfDoc.destroy();
+
+    document.getElementById('pdfEditSection').classList.add('hidden');
+    document.getElementById('pdfConvertSection').classList.remove('hidden');
+    document.getElementById('pdfConvertFileName').textContent = currentPdfFile.name;
+    document.getElementById('pdfConvertPageCount').textContent = `(${pageCount}페이지)`;
+    document.getElementById('pdfConvertResults').classList.add('hidden');
+    document.getElementById('pdfConvertGallery').innerHTML = '';
+    updatePdfOptionButtons();
+    document.getElementById('pdfConvertSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function runPdfConvert() {
+    if (!currentPdfArrayBuffer) return;
+    const runBtn = document.getElementById('pdfConvertRunBtn');
+    const progressEl = document.getElementById('pdfConvertProgress');
+    runBtn.disabled = true;
+    runBtn.classList.add('opacity-60');
+    progressEl.classList.remove('hidden');
+    progressEl.textContent = '변환 준비 중...';
+
+    try {
+        const { convertPdfToImages } = await import('./pdf/pdfToImages.js');
+        // 이전 결과 정리
+        pdfConvertResults.forEach(r => r.url && URL.revokeObjectURL(r.url));
+        pdfConvertResults = [];
+
+        const results = await convertPdfToImages(currentPdfArrayBuffer, {
+            dpi: pdfConvertDpi,
+            format: pdfConvertFormat,
+            quality: 0.95,
+            onProgress: (current, total) => {
+                progressEl.textContent = `변환 중... ${current} / ${total}`;
+            },
+        });
+
+        pdfConvertResults = results.map(r => ({
+            pageNumber: r.pageNumber,
+            blob: r.blob,
+            url: URL.createObjectURL(r.blob),
+        }));
+
+        renderPdfConvertGallery();
+        document.getElementById('pdfConvertResults').classList.remove('hidden');
+        progressEl.textContent = `✅ ${results.length}페이지 변환 완료`;
+    } catch (err) {
+        console.error(err);
+        progressEl.textContent = '변환 중 오류: ' + (err.message || '');
+    } finally {
+        runBtn.disabled = false;
+        runBtn.classList.remove('opacity-60');
+    }
+}
+
+function renderPdfConvertGallery() {
+    const gallery = document.getElementById('pdfConvertGallery');
+    gallery.innerHTML = '';
+    const ext = pdfConvertFormat === 'jpeg' ? 'jpg' : 'png';
+    const baseName = currentPdfFile.name.replace(/\.pdf$/i, '');
+
+    pdfConvertResults.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden';
+        card.innerHTML = `
+            <div class="aspect-[3/4] bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden checker-bg">
+                <img src="${r.url}" class="max-w-full max-h-full object-contain" data-zoomable />
+            </div>
+            <div class="p-2 flex items-center justify-between gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400">페이지 ${r.pageNumber}</span>
+                <button class="download-page-btn px-2 py-1 bg-gray-900 dark:bg-emerald-600 hover:bg-black dark:hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors" data-page="${r.pageNumber}">
+                    ⬇ 저장
+                </button>
+            </div>
+        `;
+        card.querySelector('.download-page-btn').addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = r.url;
+            a.download = `${baseName}_page${String(r.pageNumber).padStart(3, '0')}.${ext}`;
+            a.click();
+        });
+        gallery.appendChild(card);
+    });
+
+    document.getElementById('pdfConvertResultsInfo').textContent =
+        `${pdfConvertResults.length}페이지 · ${pdfConvertFormat.toUpperCase()} · ${pdfConvertDpi} DPI`;
+
+    if (zoom) zoom.attach('#pdfConvertGallery [data-zoomable]');
+}
+
+async function downloadAllPdfImages() {
+    if (pdfConvertResults.length === 0) return;
+    const zip = new JSZip();
+    const ext = pdfConvertFormat === 'jpeg' ? 'jpg' : 'png';
+    const baseName = currentPdfFile.name.replace(/\.pdf$/i, '');
+
+    pdfConvertResults.forEach(r => {
+        zip.file(`${baseName}_page${String(r.pageNumber).padStart(3, '0')}.${ext}`, r.blob);
+    });
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${baseName}_images.zip`;
+    a.click();
+}
+
+// ──────────────────────────────────────────────
+// PDF 편집 모드
+// ──────────────────────────────────────────────
+async function showPdfEditSection() {
+    if (!currentPdfFile || !currentPdfArrayBuffer) return;
+    showLoading('썸네일 생성 중...');
+    try {
+        const { createPdfEditor } = await import('./pdf/pdfEditor.js');
+        const { loadPdfDocument, renderThumbnail } = await import('./pdf/pdfToImages.js');
+
+        pdfEditor = await createPdfEditor(currentPdfArrayBuffer);
+        const pdfDoc = await loadPdfDocument(currentPdfArrayBuffer);
+
+        // 모든 페이지 썸네일 생성
+        pdfEditThumbnails.forEach(t => t.url && URL.revokeObjectURL(t.url));
+        pdfEditThumbnails = [];
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const blob = await renderThumbnail(pdfDoc, i, { maxWidth: 200 });
+            pdfEditThumbnails.push({ originalIndex: i - 1, url: URL.createObjectURL(blob) });
+        }
+        pdfDoc.destroy();
+
+        document.getElementById('pdfConvertSection').classList.add('hidden');
+        document.getElementById('pdfEditSection').classList.remove('hidden');
+        document.getElementById('pdfEditFileName').textContent = currentPdfFile.name;
+
+        renderPdfEditGrid();
+        document.getElementById('pdfEditSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        hideLoading();
+    } catch (err) {
+        hideLoading();
+        console.error(err);
+        setStatusMessage('PDF 편집 준비 중 오류: ' + (err.message || ''));
+    }
+}
+
+function renderPdfEditGrid() {
+    const grid = document.getElementById('pdfEditGrid');
+    grid.innerHTML = '';
+
+    const order = pdfEditor.currentPageOrder;
+    document.getElementById('pdfEditPageCount').textContent = `(${order.length}페이지)`;
+
+    order.forEach((originalIndex, currentPos) => {
+        const thumb = pdfEditThumbnails.find(t => t.originalIndex === originalIndex);
+        if (!thumb) return;
+
+        const card = document.createElement('div');
+        card.className = 'relative group bg-white dark:bg-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden cursor-move transition-all hover:border-primary';
+        card.draggable = true;
+        card.dataset.pos = currentPos;
+        card.innerHTML = `
+            <div class="aspect-[3/4] bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                <img src="${thumb.url}" class="max-w-full max-h-full object-contain pointer-events-none" />
+            </div>
+            <div class="p-2 flex items-center justify-between gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400">${currentPos + 1} <span class="text-gray-300 dark:text-gray-600">/ 원본 ${originalIndex + 1}p</span></span>
+                <button class="pdf-page-remove-btn w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-bold transition-colors flex items-center justify-center" title="이 페이지 삭제">×</button>
+            </div>
+        `;
+        card.querySelector('.pdf-page-remove-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!pdfEditor) return;
+            if (pdfEditor.currentPageCount <= 1) {
+                setStatusMessage('페이지가 1장 이상 남아있어야 합니다.');
+                return;
+            }
+            pdfEditor.removePage(currentPos);
+            renderPdfEditGrid();
+        });
+
+        // HTML5 드래그 앤 드롭
+        card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(currentPos));
+            card.classList.add('opacity-40');
+        });
+        card.addEventListener('dragend', () => {
+            card.classList.remove('opacity-40');
+            grid.querySelectorAll('[data-pos]').forEach(c => {
+                c.classList.remove('ring-2', 'ring-primary');
+            });
+        });
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            card.classList.add('ring-2', 'ring-primary');
+        });
+        card.addEventListener('dragleave', () => {
+            card.classList.remove('ring-2', 'ring-primary');
+        });
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.classList.remove('ring-2', 'ring-primary');
+            const src = parseInt(e.dataTransfer.getData('text/plain'), 10);
+            const dst = currentPos;
+            if (Number.isInteger(src) && src !== dst) {
+                pdfEditor.movePage(src, dst);
+                renderPdfEditGrid();
+            }
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+async function savePdfEdit() {
+    if (!pdfEditor) return;
+    const btn = document.getElementById('pdfEditSaveBtn');
+    btn.disabled = true;
+    btn.classList.add('opacity-60');
+
+    try {
+        showLoading('PDF 저장 중...');
+        const blob = await pdfEditor.save();
+        const baseName = currentPdfFile.name.replace(/\.pdf$/i, '');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${baseName}_edited.pdf`;
+        a.click();
+        hideLoading();
+    } catch (err) {
+        hideLoading();
+        console.error(err);
+        setStatusMessage('PDF 저장 중 오류: ' + (err.message || ''));
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-60');
+    }
 }
 
 init();
