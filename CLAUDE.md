@@ -14,6 +14,7 @@ GargantuaX의 오픈소스 Gemini 워터마크 제거 도구를 포크하여 한
 src/
   app.js                  # 메인 UI 진입점 (모드 토글, 이벤트, 배경 제거, PDF 도구 포함)
   core/                   # 워터마크 엔진 (역 알파 블렌딩 알고리즘)
+  bg/                     # 배경 제거 모듈 (transformersRemover — BiRefNet-lite) — 동적 import
   pdf/                    # PDF 도구 모듈 (pdfToImages, pdfEditor) — 동적 import
   userscript/             # Tampermonkey 유저스크립트 (Gemini 페이지 자동 처리)
   sdk/                    # SDK 진입점 (browser / node / image-data)
@@ -37,8 +38,10 @@ dist/                     # 빌드 산출물 (git 제외)
 | 한국어 전용 UI | 기본 언어 ko-KR, 심플 디자인 | `src/i18n/ko-KR.json`, `src/app.js` |
 | URL 붙여넣기 | 이미지 URL 직접 입력 처리 | `src/app.js` |
 | Gemini 공유 링크 지원 | og:image 추출 후 서버 프록시 | `api/fetch-image.js` |
-| 배경 제거 — 색상 | BFS flood fill 방식 | `src/app.js` setupBgSubModeToggle |
-| 배경 제거 — AI | @imgly/background-removal (isnet 모델) | `src/app.js` |
+| 배경 제거 — 색상 | BFS flood fill 방식 | `src/app.js` + `src/shared/edgeFeathering.js` |
+| 배경 제거 — AI (빠름 · isnet) | @imgly/background-removal `large`+WebGPU, ~80MB | `src/app.js` runIsnetRemoval |
+| 배경 제거 — AI (고품질 · BiRefNet-lite) | @huggingface/transformers v4 (MIT 모델), ~180MB, WebGPU 우선 | `src/bg/transformersRemover.js` |
+| AI 결과 엣지 페더링 | distance 모드 알파 감쇠 — 계단현상 완화 | `src/shared/edgeFeathering.js` |
 | 이미지 용량 축소 다운로드 | 다운로드 시 압축 적용 | `src/app.js` |
 | PDF → 이미지 변환 | pdfjs-dist 기반, PNG/JPG + 150/300/600 DPI, ZIP 다운로드 | `src/pdf/pdfToImages.js` |
 | PDF 페이지 편집 | pdf-lib 기반, 드래그 재정렬 + 삭제, 무손실 재저장 | `src/pdf/pdfEditor.js` |
@@ -75,7 +78,8 @@ pnpm benchmark:samples  # 샘플 벤치마크
 
 | 패키지 | 용도 |
 |--------|------|
-| `@imgly/background-removal` ^1.7.0 | AI 배경 제거 (isnet 모델, CDN: jsDelivr) |
+| `@imgly/background-removal` ^1.7.0 | AI 배경 제거 — 빠름(isnet 모델, CDN: jsDelivr) |
+| `@huggingface/transformers` ^4.2.0 | AI 배경 제거 — 고품질(BiRefNet-lite, HuggingFace CDN, WebGPU 지원) |
 | `pdfjs-dist` ^5.6.205 | PDF 렌더링 (이미지 변환, 워커: jsDelivr CDN) |
 | `pdf-lib` ^1.17.1 | PDF 편집 (페이지 재정렬/삭제 무손실 재저장) |
 | `jszip` ^3.10.1 | ZIP 다운로드 |
@@ -95,9 +99,14 @@ pnpm build
 
 ## 배경 제거 모델 설정
 
-- **모델**: `isnet` (풀프리시전, rembg 동급 품질) — `medium`(isnet_fp16)에서 업그레이드됨
-- **CDN**: jsDelivr 기본 (`staticimgly.com`) — `publicPath` 제거 후 기본값 사용
-- **서브모드**: `color` (BFS flood fill, 빠름) / `ai` (@imgly/background-removal, 고품질)
+- **서브모드**: `color` (BFS flood fill, 즉시) / `ai` (모델 선택형)
+- **AI 모델 선택** (`bgAiModel`):
+  - `isnet` — @imgly/background-removal `large` (~80MB, WebGPU 가속, `device: 'gpu'` 명시)
+  - `birefnet` — `onnx-community/BiRefNet_lite-ONNX` via transformers.js (MIT, ~180MB, WebGPU 우선)
+- **CDN**: jsDelivr 기본 (`staticimgly.com`) — `publicPath` 제거 후 기본값 사용. transformers.js는 HuggingFace Hub 기본 캐시 사용 (별도 publicPath 설정 금지)
+- **AI 결과 후처리**: distance 페더링 (`src/shared/edgeFeathering.js`, radius=2) — 계단현상 완화
+- **다운로드 동의 모달**: BiRefNet 첫 선택 시 ~180MB 다운로드 안내, `localStorage.gwr_birefnet_lite_downloaded` 로 캐시 기록 → 다음부터 즉시 활성화
+- **라이선스 주의**: RMBG-1.4 (briaai) 는 비상용 라이선스 → 채택 제외. BiRefNet (MIT) 만 사용
 
 ## PDF 도구 설정
 
@@ -112,6 +121,8 @@ pnpm build
 - [ ] URL 프록시(`api/fetch-image.js`): SSRF 방지 — http/https만 허용, 25MB 제한 유지
 - [ ] 빌드 후 `dist/` 디렉토리 존재 확인 (`pnpm build` 성공 여부)
 - [ ] PDF 모드: 청크 분리 확인 (`dist/chunks/pdf-*.js`, `dist-*.js` 존재)
+- [ ] AI 모델 청크 분리: `dist/chunks/transformers.web-*.js`, `transformersRemover-*.js` 존재 (BiRefNet 모드 시에만 로드)
+- [ ] 신규 AI 모델 추가 시 라이선스 확인 — 상용 가능 라이선스(MIT/Apache 2.0)만 채택
 - [ ] Vercel 자동 배포 확인 (main 푸시 시 CI 트리거)
 - [ ] 업스트림 변경 병합 시 한국어 UI 커스텀 파일 충돌 확인
 

@@ -101,6 +101,15 @@
           🤖 AI 제거
         </button>
       </div>
+      <!-- AI 모델 선택 (AI 서브모드 활성 시 노출) -->
+      <div id="bgAiModelRow" class="hidden flex justify-center gap-1.5 pt-2 px-3">
+        <button id="bgAiModelIsnet" class="px-3 py-1 rounded-lg text-xs font-medium transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm">
+          ⚡ 빠름 (isnet)
+        </button>
+        <button id="bgAiModelBirefnet" class="px-3 py-1 rounded-lg text-xs font-medium transition-all text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          ✨ 고품질 (BiRefNet)
+        </button>
+      </div>
       <p id="bgModeHint" class="hidden text-xs text-center text-amber-600/70 dark:text-amber-400/60 pt-1.5 px-4">
         ⚡ 첫 사용 시 AI 모델(~80MB)을 다운로드합니다. 이후에는 캐시됩니다.
       </p>
@@ -345,6 +354,26 @@
     <div class="flex flex-col items-center gap-3">
       <div class="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-primary"></div>
       <p class="text-sm text-gray-500 dark:text-gray-400">처리 중...</p>
+    </div>
+  </div>
+
+  <!-- 고품질 모델 다운로드 동의 모달 -->
+  <div id="modelConsentModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] hidden flex items-center justify-center px-4">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-sm w-full p-6 border border-gray-200 dark:border-gray-700">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">✨ 고품질 모델 다운로드</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+        BiRefNet 모델(<span id="modelConsentSize">약 180MB</span>)을 다운로드합니다.<br>
+        머리카락·털·복잡한 외곽선을 훨씬 더 정교하게 처리합니다.<br>
+        브라우저에 캐시되어 다음부턴 즉시 동작합니다.
+      </p>
+      <div class="flex gap-2 mt-5">
+        <button id="modelConsentCancel" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          취소
+        </button>
+        <button id="modelConsentOk" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:opacity-90 transition-opacity">
+          다운로드 시작
+        </button>
+      </div>
     </div>
   </div>
 

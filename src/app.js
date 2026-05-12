@@ -15,6 +15,7 @@ import {
     showLoading,
     hideLoading
 } from './utils.js';
+import { featherAlphaEdges, featherBlobEdges } from './shared/edgeFeathering.js';
 import JSZip from 'jszip';
 import mediumZoom from 'medium-zoom';
 
@@ -29,6 +30,7 @@ let zoom = null;
 let currentSingleItem = null;
 let currentMode = 'watermark';  // 'watermark' | 'background' | 'pdf'
 let bgSubMode = 'color';        // 'color' | 'ai'       (배경 제거 서브모드)
+let bgAiModel = 'isnet';        // 'isnet' | 'birefnet'  (AI 모델 선택)
 let pdfSubMode = 'convert';     // 'convert' | 'edit'   (PDF 서브모드)
 
 // PDF 상태
@@ -258,14 +260,25 @@ function setupBgSubModeToggle() {
 
     if (btnColor) btnColor.addEventListener('click', () => applyBgSubMode('color'));
     if (btnAI)    btnAI.addEventListener('click',    () => applyBgSubMode('ai'));
+
+    // AI 모델 선택 (빠름 isnet / 고품질 BiRefNet)
+    const btnIsnet     = document.getElementById('bgAiModelIsnet');
+    const btnBirefnet  = document.getElementById('bgAiModelBirefnet');
+    if (btnIsnet)    btnIsnet.addEventListener('click',    () => applyBgAiModel('isnet'));
+    if (btnBirefnet) btnBirefnet.addEventListener('click', () => requestBirefnetModel());
+
+    // 모달 닫기 핸들러
+    document.getElementById('modelConsentCancel')?.addEventListener('click', () => hideModelConsent(false));
+    document.getElementById('modelConsentOk')?.addEventListener('click',     () => hideModelConsent(true));
 }
 
 function applyBgSubMode(subMode) {
     bgSubMode = subMode;
 
-    const btnColor  = document.getElementById('bgSubModeColor');
-    const btnAI     = document.getElementById('bgSubModeAI');
-    const bgHint    = document.getElementById('bgModeHint');
+    const btnColor       = document.getElementById('bgSubModeColor');
+    const btnAI          = document.getElementById('bgSubModeAI');
+    const bgHint         = document.getElementById('bgModeHint');
+    const bgAiModelRow   = document.getElementById('bgAiModelRow');
 
     const activeClasses   = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
     const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
@@ -276,12 +289,77 @@ function applyBgSubMode(subMode) {
         btnAI?.classList.remove(...activeClasses);
         btnAI?.classList.add(...inactiveClasses);
         bgHint?.classList.add('hidden');
+        bgAiModelRow?.classList.add('hidden');
     } else {
         btnAI?.classList.add(...activeClasses);
         btnAI?.classList.remove(...inactiveClasses);
         btnColor?.classList.remove(...activeClasses);
         btnColor?.classList.add(...inactiveClasses);
         bgHint?.classList.remove('hidden');
+        bgAiModelRow?.classList.remove('hidden');
+        updateBgModeHint();
+    }
+}
+
+function applyBgAiModel(model) {
+    bgAiModel = model;
+    const btnIsnet    = document.getElementById('bgAiModelIsnet');
+    const btnBirefnet = document.getElementById('bgAiModelBirefnet');
+
+    const activeClasses   = ['bg-white', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-100', 'shadow-sm'];
+    const inactiveClasses = ['text-gray-500', 'dark:text-gray-400'];
+
+    if (model === 'isnet') {
+        btnIsnet?.classList.add(...activeClasses);
+        btnIsnet?.classList.remove(...inactiveClasses);
+        btnBirefnet?.classList.remove(...activeClasses);
+        btnBirefnet?.classList.add(...inactiveClasses);
+    } else {
+        btnBirefnet?.classList.add(...activeClasses);
+        btnBirefnet?.classList.remove(...inactiveClasses);
+        btnIsnet?.classList.remove(...activeClasses);
+        btnIsnet?.classList.add(...inactiveClasses);
+    }
+    updateBgModeHint();
+}
+
+function updateBgModeHint() {
+    const bgHint = document.getElementById('bgModeHint');
+    if (!bgHint) return;
+    if (bgAiModel === 'birefnet') {
+        bgHint.textContent = '✨ 고품질 모델 — 머리카락·털·복잡한 외곽선까지 정교하게 분리합니다.';
+    } else {
+        bgHint.textContent = '⚡ 첫 사용 시 AI 모델(~80MB)을 다운로드합니다. 이후에는 캐시됩니다.';
+    }
+}
+
+// 고품질(BiRefNet) 선택 — 첫 사용 시 다운로드 동의 모달
+async function requestBirefnetModel() {
+    const { isModelCached } = await import('./bg/transformersRemover.js');
+    if (isModelCached()) {
+        applyBgAiModel('birefnet');
+        return;
+    }
+    const agreed = await showModelConsent({ sizeLabel: '약 180MB' });
+    if (agreed) applyBgAiModel('birefnet');
+}
+
+let _modelConsentResolver = null;
+function showModelConsent({ sizeLabel } = {}) {
+    const modal = document.getElementById('modelConsentModal');
+    const sizeEl = document.getElementById('modelConsentSize');
+    if (!modal) return Promise.resolve(true);
+    if (sizeEl && sizeLabel) sizeEl.textContent = sizeLabel;
+    modal.classList.remove('hidden');
+    return new Promise((resolve) => { _modelConsentResolver = resolve; });
+}
+
+function hideModelConsent(agreed) {
+    const modal = document.getElementById('modelConsentModal');
+    modal?.classList.add('hidden');
+    if (_modelConsentResolver) {
+        _modelConsentResolver(agreed);
+        _modelConsentResolver = null;
     }
 }
 
@@ -641,19 +719,28 @@ async function processSingle(item) {
 }
 
 // ──────────────────────────────────────────────
-// 배경 제거 (동적 import — 첫 호출 시 ~60MB 모델 CDN 다운로드)
+// AI 배경 제거 — 모델 분기 (isnet / birefnet)
+// 두 모델 모두 결과에 distance 페더링 적용 → 엣지 계단현상 완화
 // ──────────────────────────────────────────────
 async function runBackgroundRemoval(fileOrBlob) {
+    if (bgAiModel === 'birefnet') {
+        return await runBirefnetRemoval(fileOrBlob);
+    }
+    return await runIsnetRemoval(fileOrBlob);
+}
+
+async function runIsnetRemoval(fileOrBlob) {
     showLoading('AI 모델 로딩 중... (첫 사용 시 ~80MB 다운로드)');
 
     const { removeBackground } = await import('@imgly/background-removal');
 
-    return await removeBackground(fileOrBlob, {
+    const rawBlob = await removeBackground(fileOrBlob, {
         // publicPath 기본값: https://staticimgly.com/@imgly/background-removal-data/{버전}/dist/
         // npm 패키지와 별도 호스팅된 CDN — 명시하지 않아야 정상 동작
         // model: 'large' = isnet (full precision) — rembg isnet-general-use와 동일 아키텍처
-        // model: 'medium' = isnet_fp16 (FP16 양자화, 품질 저하)
         model: 'large',
+        device: 'gpu',                              // WebGPU 가속 명시 (미지원 시 자동 폴백)
+        output: { format: 'image/png', quality: 1.0 },
         progress: (key, current, total) => {
             if (total > 0) {
                 const pct = Math.round((current / total) * 100);
@@ -661,6 +748,26 @@ async function runBackgroundRemoval(fileOrBlob) {
             }
         },
     });
+
+    showLoading('엣지 보정 중...');
+    return await featherBlobEdges(rawBlob, { mode: 'distance', radius: 2 });
+}
+
+async function runBirefnetRemoval(fileOrBlob) {
+    showLoading('BiRefNet 모델 로딩 중... (첫 사용 시 ~180MB 다운로드)');
+
+    const { removeWithBiRefNetLite } = await import('./bg/transformersRemover.js');
+
+    const rawBlob = await removeWithBiRefNetLite(fileOrBlob, {
+        onProgress: (stage, pct) => {
+            if (stage === 'load')   showLoading(`모델 다운로드 중... ${pct}%`);
+            if (stage === 'infer')  showLoading(`고품질 배경 제거 중... ${pct}%`);
+            if (stage === 'compose') showLoading('이미지 합성 중...');
+        },
+    });
+
+    showLoading('엣지 보정 중...');
+    return await featherBlobEdges(rawBlob, { mode: 'distance', radius: 2 });
 }
 
 // ──────────────────────────────────────────────
@@ -730,25 +837,12 @@ async function removeBackgroundByColor(fileOrBlob) {
                     }
                 }
 
-                // 엣지 스무딩 — 투명 픽셀 경계에서 부드러운 알파 전환
-                const SOFT = TOLERANCE * 1.5;
-                for (let y = 0; y < h; y++) {
-                    for (let x = 0; x < w; x++) {
-                        const pi = y * w + x, i4 = pi * 4;
-                        if (data[i4 + 3] === 0) continue;
-
-                        const adj =
-                            (x > 0     && data[(pi - 1) * 4 + 3] === 0) ||
-                            (x < w - 1 && data[(pi + 1) * 4 + 3] === 0) ||
-                            (y > 0     && data[(pi - w) * 4 + 3] === 0) ||
-                            (y < h - 1 && data[(pi + w) * 4 + 3] === 0);
-
-                        if (adj) {
-                            const d = colorDist(i4);
-                            if (d < SOFT) data[i4 + 3] = Math.round((d / SOFT) * 255);
-                        }
-                    }
-                }
+                // 엣지 스무딩 — 공용 모듈 사용 (color 모드: 배경색과의 RGB 거리 기반)
+                featherAlphaEdges(imageData, {
+                    mode: 'color',
+                    bgRgb: [bgR, bgG, bgB],
+                    softness: TOLERANCE * 1.5,
+                });
 
                 ctx.putImageData(imageData, 0, 0);
                 canvas.toBlob(blob => resolve(blob), 'image/png');
