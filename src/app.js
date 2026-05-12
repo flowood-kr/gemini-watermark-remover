@@ -200,6 +200,8 @@ function setupModeToggle() {
     const btnBgRemoval = document.getElementById('modeBgRemoval');
     const btnPdf       = document.getElementById('modePdf');
     const bgSubModeRow = document.getElementById('bgSubModeRow');
+    const bgAiModelRow = document.getElementById('bgAiModelRow');
+    const bgModeHint   = document.getElementById('bgModeHint');
     const pdfSubModeRow = document.getElementById('pdfSubModeRow');
     const pdfUploadArea = document.getElementById('pdfUploadArea');
     const imageUrlDivider = document.getElementById('imageUrlDivider');
@@ -229,6 +231,12 @@ function setupModeToggle() {
 
         bgSubModeRow?.classList.toggle('hidden', mode !== 'background');
         pdfSubModeRow?.classList.toggle('hidden', mode !== 'pdf');
+        // background 모드가 아니면 AI 모델 토글·힌트도 함께 숨김
+        // (background 진입 시 applyBgSubMode('color') 가 다시 표시 여부 결정)
+        if (mode !== 'background') {
+            bgAiModelRow?.classList.add('hidden');
+            bgModeHint?.classList.add('hidden');
+        }
 
         // 업로드 영역 교체: PDF 모드는 PDF 입력 / 이미지 모드는 이미지 입력
         if (mode === 'pdf') {
