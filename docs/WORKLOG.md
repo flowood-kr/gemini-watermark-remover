@@ -1,5 +1,30 @@
 # WORKLOG
 
+## 2026-05-14 — PixKit SNS 공유 메타·썸네일 추가
+
+### 에이전트
+Codex
+
+### 유형
+marketing (OG/Twitter 메타 및 공유 이미지)
+
+### 영향 범위
+- SNS 공유 메타 태그 수정 (`public/index.html`)
+- PixKit 공유 썸네일 추가 (`public/assets/pixkit-og.svg`, `public/assets/pixkit-og.png`)
+
+### 내용
+- `pixkit.kr` 공유 기준 canonical, Open Graph, Twitter Card 메타 태그 추가
+- 공유 제목을 `PixKit | 이미지·PDF 작업을 브라우저에서 바로`로 정리
+- 설명 문구에 무료, 회원가입 없음, 브라우저 처리, 서버 미업로드 메시지 반영
+- 1200×630 규격 공유 썸네일을 PixKit 다크 UI와 민트 브랜드 컬러에 맞춰 제작
+
+### 검증
+- `pnpm build` 성공
+- 로컬 정적 서버에서 HTML 메타 태그 노출 확인
+- 로컬 정적 서버에서 `/assets/pixkit-og.png` 200 OK 및 `image/png` 응답 확인
+
+---
+
 ## 2026-05-14 — 헤더 99PAGE CTA 문구 수정
 
 ### 에이전트

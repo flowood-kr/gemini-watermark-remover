@@ -1,0 +1,102 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#07111F"/>
+      <stop offset="0.56" stop-color="#0B1728"/>
+      <stop offset="1" stop-color="#11213B"/>
+    </linearGradient>
+    <linearGradient id="mintPanel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10B981"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#000815" flood-opacity="0.34"/>
+    </filter>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" stroke="#22314A" stroke-width="1" opacity="0.45"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.28"/>
+  <path d="M0 472C190 420 336 463 503 506C695 556 858 557 1200 461V630H0V472Z" fill="#0E2237" opacity="0.56"/>
+  <path d="M1036 0H1200V206C1114 170 1059 104 1036 0Z" fill="#10B981" opacity="0.12"/>
+
+  <g transform="translate(70 56)">
+    <g>
+      <rect x="0" y="0" width="25" height="25" rx="6" fill="#10B981"/>
+      <rect x="34" y="0" width="25" height="25" rx="6" fill="#10B981" opacity="0.55"/>
+      <rect x="0" y="34" width="25" height="25" rx="6" fill="#10B981" opacity="0.55"/>
+      <rect x="34" y="34" width="25" height="25" rx="6" fill="#10B981"/>
+    </g>
+    <text x="80" y="38" fill="#F3F7FA" font-size="34" font-weight="800" letter-spacing="-0.4" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">PixKit</text>
+    <text x="193" y="38" fill="#7E8BA2" font-size="20" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">픽킷</text>
+  </g>
+
+  <g transform="translate(70 166)">
+    <rect x="0" y="0" width="300" height="38" rx="19" fill="#0B2D2A" stroke="#124E46"/>
+    <circle cx="24" cy="19" r="5" fill="#34D399"/>
+    <text x="40" y="25" fill="#6EE7B7" font-size="18" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">무료 · 회원가입 없음</text>
+
+    <text x="0" y="114" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">이미지·PDF 작업을</text>
+    <text x="0" y="196" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">브라우저에서 바로</text>
+
+    <text x="0" y="254" fill="#AEB9C9" font-size="26" font-weight="600" letter-spacing="-0.1" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">워터마크 제거, 배경 제거, PDF 변환·편집까지 한 곳에서.</text>
+    <text x="0" y="295" fill="#6EE7B7" font-size="24" font-weight="800" letter-spacing="-0.1" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">파일은 서버에 업로드되지 않습니다.</text>
+  </g>
+
+  <g transform="translate(70 506)">
+    <g>
+      <rect x="0" y="0" width="146" height="46" rx="23" fill="#102038" stroke="#273852"/>
+      <path d="M28 23L37 32L52 16" stroke="#34D399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="66" y="30" fill="#E7EDF6" font-size="19" font-weight="750" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">완전 무료</text>
+    </g>
+    <g transform="translate(164 0)">
+      <rect x="0" y="0" width="184" height="46" rx="23" fill="#102038" stroke="#273852"/>
+      <path d="M28 23L37 32L52 16" stroke="#34D399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="66" y="30" fill="#E7EDF6" font-size="19" font-weight="750" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">설치 없이 사용</text>
+    </g>
+    <g transform="translate(366 0)">
+      <rect x="0" y="0" width="244" height="46" rx="23" fill="#102038" stroke="#273852"/>
+      <path d="M28 23L37 32L52 16" stroke="#34D399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="66" y="30" fill="#E7EDF6" font-size="19" font-weight="750" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">브라우저 안에서 처리</text>
+    </g>
+  </g>
+
+  <g transform="translate(720 104)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="408" height="420" rx="32" fill="#101B2D" stroke="#2A3953" stroke-width="2"/>
+    <rect x="24" y="24" width="360" height="64" rx="18" fill="#17243A"/>
+    <rect x="48" y="46" width="158" height="20" rx="10" fill="#2C3A54"/>
+    <rect x="314" y="42" width="42" height="28" rx="14" fill="#10B981"/>
+
+    <rect x="38" y="118" width="332" height="142" rx="24" fill="#0D1626" stroke="#34445F" stroke-width="2" stroke-dasharray="12 10"/>
+    <path d="M204 172V204M188 188H220" stroke="#607089" stroke-width="8" stroke-linecap="round"/>
+    <text x="204" y="232" text-anchor="middle" fill="#A9B5C5" font-size="19" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">이미지를 끌어오세요</text>
+
+    <g transform="translate(38 286)">
+      <rect x="0" y="0" width="154" height="52" rx="18" fill="#13253A" stroke="#243753"/>
+      <rect x="18" y="16" width="20" height="20" rx="5" fill="#10B981"/>
+      <text x="50" y="33" fill="#E8EEF6" font-size="17" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">워터마크</text>
+    </g>
+    <g transform="translate(216 286)">
+      <rect x="0" y="0" width="154" height="52" rx="18" fill="#13253A" stroke="#243753"/>
+      <rect x="18" y="16" width="20" height="20" rx="5" fill="#38BDF8"/>
+      <text x="50" y="33" fill="#E8EEF6" font-size="17" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">배경 제거</text>
+    </g>
+    <g transform="translate(38 354)">
+      <rect x="0" y="0" width="154" height="52" rx="18" fill="#13253A" stroke="#243753"/>
+      <rect x="18" y="16" width="20" height="20" rx="5" fill="#60A5FA"/>
+      <text x="50" y="33" fill="#E8EEF6" font-size="17" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">PDF 변환</text>
+    </g>
+    <g transform="translate(216 354)">
+      <rect x="0" y="0" width="154" height="52" rx="18" fill="#13253A" stroke="#243753"/>
+      <rect x="18" y="16" width="20" height="20" rx="5" fill="#F59E0B"/>
+      <text x="50" y="33" fill="#E8EEF6" font-size="17" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">PDF 편집</text>
+    </g>
+  </g>
+
+  <g transform="translate(930 550)">
+    <rect x="0" y="0" width="198" height="42" rx="21" fill="url(#mintPanel)"/>
+    <text x="99" y="28" text-anchor="middle" fill="#07111F" font-size="20" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">pixkit.kr</text>
+  </g>
+</svg>
