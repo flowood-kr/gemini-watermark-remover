@@ -1,0 +1,48 @@
+# PixKit — https://pixkit.kr/
+# 모든 일반 검색엔진은 전체 색인 허용. 사이트맵 위치 명시.
+
+User-agent: *
+Allow: /
+Disallow: /assets/99page-banner*.gif$
+
+# 한국 검색엔진(네이버 Yeti, Daum) 명시적 허용
+User-agent: Yeti
+Allow: /
+
+User-agent: Daum
+Allow: /
+
+# AI 답변 엔진(AEO/GEO) — 답변 인용에 사용되도록 명시적 허용
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# 학습 데이터 수집은 사이트 정책에 따라 별도 결정 — 현재는 허용
+
+Sitemap: https://pixkit.kr/sitemap.xml
