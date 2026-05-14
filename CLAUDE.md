@@ -45,6 +45,8 @@ dist/                     # 빌드 산출물 (git 제외)
 | 이미지 용량 축소 다운로드 | 다운로드 시 압축 적용 | `src/app.js` |
 | PDF → 이미지 변환 | pdfjs-dist 기반, PNG/JPG + 150/300/600 DPI, ZIP 다운로드 | `src/pdf/pdfToImages.js` |
 | PDF 페이지 편집 | pdf-lib 기반, 드래그 재정렬 + 삭제, 무손실 재저장 | `src/pdf/pdfEditor.js` |
+| 즉시 접속 | 초기 접속 비밀번호 게이트 제거, 접속 즉시 사용 | `src/app.js`, `public/index.html` |
+| 99PAGE 상단 배너 | 데스크톱/모바일 GIF 배너, `page-e.net` sponsor 링크 | `public/index.html`, `public/assets/99page-banner*.gif` |
 
 ## 배포
 
@@ -120,6 +122,7 @@ pnpm build
 - [ ] 배경 제거 AI 모드: CDN 로딩 오류 시 jsDelivr 기본값 확인 (publicPath 설정 금지)
 - [ ] URL 프록시(`api/fetch-image.js`): SSRF 방지 — http/https만 허용, 25MB 제한 유지
 - [ ] 빌드 후 `dist/` 디렉토리 존재 확인 (`pnpm build` 성공 여부)
+- [ ] 99PAGE 배너 수정 시 데스크톱/모바일 GIF 둘 다 갱신하고 `build.js`의 `.gif` MIME 유지
 - [ ] PDF 모드: 청크 분리 확인 (`dist/chunks/pdf-*.js`, `dist-*.js` 존재)
 - [ ] AI 모델 청크 분리: `dist/chunks/transformers.web-*.js`, `transformersRemover-*.js` 존재 (BiRefNet 모드 시에만 로드)
 - [ ] 신규 AI 모델 추가 시 라이선스 확인 — 상용 가능 라이선스(MIT/Apache 2.0)만 채택

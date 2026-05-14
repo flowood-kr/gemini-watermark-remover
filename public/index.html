@@ -34,30 +34,6 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 min-h-screen loading">
 
-  <!-- 접속 비밀번호 -->
-  <div id="accessGate" class="fixed inset-0 z-[70] hidden bg-gray-950/70 backdrop-blur-sm flex items-center justify-center px-4">
-    <form id="accessGateForm" class="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl p-5 space-y-4">
-      <div class="space-y-1">
-        <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-50">접속 비밀번호</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">서비스를 사용하려면 비밀번호를 입력하세요.</p>
-      </div>
-      <div class="space-y-2">
-        <input
-          id="accessPasswordInput"
-          type="password"
-          inputmode="numeric"
-          autocomplete="current-password"
-          class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-primary"
-          placeholder="비밀번호"
-        />
-        <p id="accessPasswordError" class="hidden text-xs text-red-500">비밀번호가 올바르지 않습니다.</p>
-      </div>
-      <button type="submit" class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-medium transition-colors">
-        확인
-      </button>
-    </form>
-  </div>
-
   <!-- 헤더 -->
   <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-b border-gray-100 dark:border-gray-800">
     <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -78,6 +54,32 @@
       </button>
     </div>
   </header>
+
+  <!-- 99PAGE 배너 -->
+  <aside class="sticky top-14 z-40 max-w-4xl mx-auto px-4 pt-2">
+    <a
+      href="https://page-e.net/"
+      target="_blank"
+      rel="noopener sponsored"
+      class="block rounded-2xl bg-white dark:bg-gray-900 border border-blue-100 dark:border-gray-800 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-950 transition-shadow overflow-hidden"
+      aria-label="99PAGE 홈페이지 제작 서비스 page-e.net으로 이동"
+    >
+      <img
+        src="/assets/99page-banner-mobile.gif"
+        width="640"
+        height="112"
+        class="block w-full h-auto sm:hidden"
+        alt="99PAGE 홈페이지 제작 서비스, 홈페이지 월 9만 9천원, 상담 보기"
+      />
+      <img
+        src="/assets/99page-banner.gif"
+        width="960"
+        height="90"
+        class="hidden w-full h-auto sm:block"
+        alt="99PAGE 홈페이지 제작 서비스, 홈페이지 월 9만 9천원, 상담 보기"
+      />
+    </a>
+  </aside>
 
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-6">
 

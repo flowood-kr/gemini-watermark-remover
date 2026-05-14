@@ -1,5 +1,48 @@
 # WORKLOG
 
+## 2026-05-14 — 접속 암호 제거 + 99PAGE 상단 GIF 배너 추가
+
+### 에이전트
+Codex
+
+### 유형
+feat (접근 흐름 개선) + design (상단 광고 배너)
+
+### 영향 범위
+- 초기 접속 비밀번호 게이트 제거 (`src/app.js`, `public/index.html`)
+- 99PAGE sponsor GIF 배너 추가 (`public/assets/99page-banner.gif`, `public/assets/99page-banner-mobile.gif`)
+- 로컬 정적 서버 GIF MIME 지원 (`build.js`)
+- 문서 동기화 (`CLAUDE.md`, `docs/WORKLOG.md`)
+
+### 내용
+1. **암호 입력 절차 제거**
+   - `ACCESS_PASSWORD`, `ACCESS_SESSION_KEY`, `setupAccessGate()` 및 관련 세션 저장 로직 삭제
+   - `accessGate` 모달 마크업 삭제
+   - 초기 로딩 후 바로 리소스 로딩과 이벤트 바인딩으로 진입
+
+2. **99PAGE 상단 GIF 배너 추가**
+   - `https://page-e.net/`으로 연결되는 sponsor 링크 추가 (`rel="noopener sponsored"`)
+   - 데스크톱용 리더보드 GIF와 모바일 전용 GIF를 분리해 읽기성 유지
+   - 헤더 아래 sticky 영역에 배치해 기능 사용 중에도 상단에서 자연스럽게 노출
+
+3. **정적 파일 서빙 보강**
+   - 개발 서버 MIME 테이블에 `.gif: image/gif` 추가
+
+### 검증
+- `pnpm build` 성공
+- 로컬 브라우저 검증: 데스크톱/390px 모바일 첫 화면에서 암호 모달 미노출, 99PAGE 배너 노출 확인
+- `curl -I /assets/99page-banner.gif`: `Content-Type: image/gif` 확인
+- `pnpm test` 실행: 전체 테스트 중 기존 회귀 테스트 3건 실패
+  - `tests/regression/comparisonPortraitLayout.test.js`
+  - `tests/regression/i18nRuntime.test.js` 2건
+  - 이번 변경 파일과 직접 관련 없는 기존 실패로 판단, 빌드와 화면 검증은 통과
+
+### 주의사항
+- 모바일 배너는 별도 GIF를 사용한다. 데스크톱 GIF만 교체하면 모바일 읽기성이 깨질 수 있다.
+- 배너 링크는 외부 이동이므로 `target="_blank"`와 `rel="noopener sponsored"`를 유지한다.
+
+---
+
 ## 2026-05-12 — 배경 제거 품질 개선: BiRefNet-lite 모델 추가 + 엣지 페더링
 
 ### 에이전트

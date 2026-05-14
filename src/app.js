@@ -41,8 +41,6 @@ let pdfConvertDpi = 300;          // 150 | 300 | 600
 let pdfConvertResults = [];       // [{ pageNumber, blob, url }]
 let pdfEditor = null;             // PdfEditor 인스턴스
 let pdfEditThumbnails = [];       // [{ originalIndex, url }] — 0-based 원본 페이지 인덱스 기준
-const ACCESS_PASSWORD = '0530';
-const ACCESS_SESSION_KEY = 'gwr_access_granted';
 
 // DOM 참조
 const uploadArea = document.getElementById('uploadArea');
@@ -92,9 +90,7 @@ function disableWorkerClient(reason) {
 async function init() {
     try {
         setupDarkMode();
-        const accessGranted = setupAccessGate();
         document.body.classList.remove('loading');
-        await accessGranted;
 
         showLoading('리소스 로딩 중...');
 
@@ -130,66 +126,6 @@ async function init() {
         document.body.classList.remove('loading');
         console.error('초기화 오류:', error);
     }
-}
-
-function isAccessGranted() {
-    try {
-        return sessionStorage.getItem(ACCESS_SESSION_KEY) === '1';
-    } catch {
-        return false;
-    }
-}
-
-function markAccessGranted() {
-    try {
-        sessionStorage.setItem(ACCESS_SESSION_KEY, '1');
-    } catch {
-        // Access still proceeds for the current page when sessionStorage is unavailable.
-    }
-}
-
-function setupAccessGate() {
-    const modal = document.getElementById('accessGate');
-    const form = document.getElementById('accessGateForm');
-    const input = document.getElementById('accessPasswordInput');
-    const error = document.getElementById('accessPasswordError');
-
-    if (!modal || !form || !input) return Promise.resolve();
-
-    return new Promise((resolve) => {
-        const grantAccess = () => {
-            markAccessGranted();
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            resolve();
-        };
-
-        if (isAccessGranted()) {
-            grantAccess();
-            return;
-        }
-
-        document.body.classList.add('overflow-hidden');
-        modal.classList.remove('hidden');
-        requestAnimationFrame(() => input.focus());
-
-        form.addEventListener('submit', (event) => {
-            event.preventDefault();
-
-            if (input.value.trim() === ACCESS_PASSWORD) {
-                grantAccess();
-                return;
-            }
-
-            if (error) error.classList.remove('hidden');
-            input.value = '';
-            input.focus();
-        });
-
-        input.addEventListener('input', () => {
-            if (error) error.classList.add('hidden');
-        });
-    });
 }
 
 // ──────────────────────────────────────────────
