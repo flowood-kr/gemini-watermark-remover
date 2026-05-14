@@ -47,6 +47,7 @@ dist/                     # 빌드 산출물 (git 제외)
 | PDF 페이지 편집 | pdf-lib 기반, 드래그 재정렬 + 삭제, 무손실 재저장 | `src/pdf/pdfEditor.js` |
 | 즉시 접속 | 초기 접속 비밀번호 게이트 제거, 접속 즉시 사용 | `src/app.js`, `public/index.html` |
 | 99PAGE 상단 배너 | 데스크톱/모바일 GIF 배너, `page-e.net` sponsor 링크 | `public/index.html`, `public/assets/99page-banner*.gif` |
+| 프라이버시 안내문 | 업로드 박스 내 배지 + 페이지 하단 푸터로 "파일은 브라우저에서만 처리, 서버 저장 없음" 명시 | `public/index.html` |
 
 ## 배포
 

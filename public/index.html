@@ -193,6 +193,17 @@
         </button>
       </div>
 
+      <!-- 프라이버시 배지 — 업로드 직전 한 줄 안내 -->
+      <div class="mx-3 mt-3 mb-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-900/15 border border-emerald-100 dark:border-emerald-900/30">
+        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        <p class="text-xs text-emerald-700 dark:text-emerald-300 leading-snug text-center">
+          <strong>파일은 이 브라우저 안에서만 처리됩니다.</strong>
+          <span class="text-emerald-600/80 dark:text-emerald-400/70">서버로 업로드되거나 저장되지 않습니다.</span>
+        </p>
+      </div>
+
       <!-- 파일 드래그앤드랍 (이미지 모드) -->
       <div id="uploadArea" class="group flex flex-col items-center justify-center h-44 cursor-pointer border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary rounded-xl m-3 transition-all hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
         <svg class="w-9 h-9 text-gray-300 dark:text-gray-600 group-hover:text-primary mb-2.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,6 +428,22 @@
     </section>
 
   </main>
+
+  <!-- 프라이버시 푸터 -->
+  <footer class="max-w-5xl mx-auto px-4 pb-8 pt-2">
+    <div class="rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 sm:p-5 space-y-2">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">개인정보 안내</h2>
+      </div>
+      <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+        <strong class="text-gray-800 dark:text-gray-200">업로드하신 파일은 우리 서버에 저장되지 않습니다.</strong>
+        이미지·PDF의 모든 처리(워터마크 제거, 배경 제거 AI, PDF 변환·편집)는 여러분의 브라우저 안에서 실행되며, 다운로드 결과물 역시 로컬에서 생성됩니다.
+      </p>
+    </div>
+  </footer>
 
   <!-- 로딩 오버레이 -->
   <div id="loadingOverlay" class="fixed inset-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center">
