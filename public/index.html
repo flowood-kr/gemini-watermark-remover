@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini 워터마크 제거</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310B981' stroke-width='2'%3E%3Cpath d='M12 3l-1.9 5.8-5.8 1.9 5.8 1.9 1.9 5.8 1.9-5.8 5.8-1.9-5.8-1.9z'/%3E%3C/svg%3E">
+  <title>PixKit — 무료 이미지·PDF 도구 모음</title>
+  <meta name="description" content="브라우저에서 바로 처리하는 무료 이미지·PDF 도구 모음. Gemini 워터마크 제거, 배경 제거, PDF 이미지 변환, PDF 페이지 편집까지. 회원가입 없이 즉시 사용." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310B981'%3E%3Crect x='3' y='3' width='8' height='8' rx='2'/%3E%3Crect x='13' y='3' width='8' height='8' rx='2' opacity='.55'/%3E%3Crect x='3' y='13' width='8' height='8' rx='2' opacity='.55'/%3E%3Crect x='13' y='13' width='8' height='8' rx='2'/%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -60,12 +61,17 @@
   <!-- 헤더 -->
   <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-b border-gray-100 dark:border-gray-800">
     <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg class="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m12 3-1.9 5.8-5.8 1.9 5.8 1.9 1.9 5.8 1.9-5.8 5.8-1.9-5.8-1.9Z"></path>
+      <a href="/" class="flex items-center gap-2 group" aria-label="PixKit 홈">
+        <!-- PixKit 로고: 2x2 픽셀 그리드 — 4개 도구를 한 세트로 묶은 컨셉 -->
+        <svg class="h-6 w-6 text-primary transition-transform group-hover:scale-110" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="3" y="3" width="8" height="8" rx="2"/>
+          <rect x="13" y="3" width="8" height="8" rx="2" opacity="0.55"/>
+          <rect x="3" y="13" width="8" height="8" rx="2" opacity="0.55"/>
+          <rect x="13" y="13" width="8" height="8" rx="2"/>
         </svg>
-        <span class="font-semibold text-gray-800 dark:text-gray-100">Gemini 워터마크 제거</span>
-      </div>
+        <span class="font-semibold text-gray-800 dark:text-gray-100 tracking-tight">PixKit</span>
+        <span class="hidden sm:inline text-xs text-gray-400 dark:text-gray-500 ml-0.5">픽킷</span>
+      </a>
       <button id="themeToggle" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors">
         <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
@@ -74,6 +80,67 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- 서비스 소개 (히어로) -->
+    <section class="bg-gradient-to-br from-emerald-50 to-white dark:from-gray-900 dark:to-gray-950 border border-emerald-100 dark:border-gray-800 rounded-2xl p-6 sm:p-8 space-y-5">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100/70 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          100% 무료 · 회원가입 없음
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 tracking-tight">
+          브라우저에서 바로, <span class="text-primary">PixKit</span>.
+        </h1>
+        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+          이미지·PDF를 다룰 때 필요한 도구 4종을 한 곳에 모았습니다. 모든 처리는 여러분의 브라우저 안에서 끝나며,
+          <span class="font-medium text-gray-800 dark:text-gray-200">파일은 서버로 업로드되지 않습니다.</span>
+        </p>
+      </div>
+
+      <!-- 4개 기능 그리드 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
+          <div class="text-lg mb-1">🧼</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">Gemini 워터마크 제거</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gemini AI 이미지의 워터마크를 자동 감지·제거</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
+          <div class="text-lg mb-1">🖼️</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">이미지 배경 제거</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">색상 기반 / AI(isnet·BiRefNet) 2가지 모드</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
+          <div class="text-lg mb-1">📄</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">PDF → 이미지 변환</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">PNG·JPG, 150/300/600 DPI, ZIP 일괄 다운로드</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
+          <div class="text-lg mb-1">✂️</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">PDF 페이지 편집</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">드래그로 순서 변경·삭제, 무손실 재저장</div>
+        </div>
+      </div>
+
+      <!-- 핵심 약속 -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500 dark:text-gray-400 pt-1">
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          완전 무료
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          회원가입·로그인 없음
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          업로드한 파일은 브라우저에서 처리
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          설치 없이 즉시 사용
+        </span>
+      </div>
+    </section>
 
     <!-- 업로드 영역 -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
