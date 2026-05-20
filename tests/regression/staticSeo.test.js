@@ -69,6 +69,8 @@ test('sitemap and robots point crawlers to canonical indexable URLs', () => {
     assert.match(sitemap, /<loc>https:\/\/www\.pixkit\.kr\/terms\.html<\/loc>/);
     assert.match(sitemap, /<loc>https:\/\/www\.pixkit\.kr\/privacy\.html<\/loc>/);
     assert.match(sitemap, /<lastmod>2026-05-20<\/lastmod>/);
+    assert.match(sitemap, /xmlns:image="http:\/\/www\.google\.com\/schemas\/sitemap-image\/1\.1"/);
+    assert.equal(sitemap.includes('schemas/sitemap-image/0.9'), false);
 });
 
 test('policy pages provide crawlable Korean trust content', () => {

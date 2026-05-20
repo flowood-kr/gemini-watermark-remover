@@ -1,5 +1,27 @@
 # WORKLOG
 
+## 2026-05-20 — Google Search Console sitemap 이미지 네임스페이스 수정
+
+### 에이전트
+Codex
+
+### 유형
+fix (Search Console sitemap 오류 수정)
+
+### 영향 범위
+- sitemap 이미지 확장 네임스페이스 수정 (`public/sitemap.xml`)
+- 정적 SEO 회귀 테스트 보강 (`tests/regression/staticSeo.test.js`)
+
+### 내용
+- Google Search Console에서 `/sitemap.xml` 제출 후 `XML 태그가 잘못되었습니다`, `XML 태그 누락`, `네임스페이스가 잘못되었습니다` 오류가 표시됨
+- 원인은 image sitemap 확장 namespace가 Google 기준 `http://www.google.com/schemas/sitemap-image/1.1`이어야 하는데 `0.9`로 설정되어 있었기 때문
+- sitemap image namespace를 `1.1`로 수정하고, 다시 `0.9`로 회귀하지 않도록 테스트 추가
+
+### 검증
+- `node --test tests/regression/staticSeo.test.js` 성공
+
+---
+
 ## 2026-05-20 — PixKit 검색 최적화(AEO/SEO/GEO) 정리
 
 ### 에이전트
