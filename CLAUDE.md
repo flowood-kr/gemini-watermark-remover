@@ -4,6 +4,7 @@
 
 GargantuaX의 오픈소스 Gemini 워터마크 제거 도구를 포크하여 한국어 UI + 추가 기능을 붙인 커스텀 빌드.
 배포는 **Vercel** (기본) + **Cloudflare Workers** (선택).
+공식 공개 도메인은 `https://www.pixkit.kr/`이며, apex `https://pixkit.kr/`은 www 호스트로 리다이렉트된다.
 
 - 공식 업스트림: https://github.com/GargantuaX/gemini-watermark-remover
 - 현재 버전: `1.0.10` (package.json 기준)
@@ -48,6 +49,8 @@ dist/                     # 빌드 산출물 (git 제외)
 | 즉시 접속 | 초기 접속 비밀번호 게이트 제거, 접속 즉시 사용 | `src/app.js`, `public/index.html` |
 | 99PAGE 상단 배너 | 본문 폭과 맞춘 데스크톱/모바일 GIF 배너 + 헤더 CTA, `page-e.net` sponsor 링크 | `public/index.html`, `public/assets/99page-banner*.gif` |
 | 프라이버시 안내문 | 업로드 박스 내 배지 + 페이지 하단 푸터로 "파일은 브라우저에서만 처리, 서버 저장 없음" 명시 | `public/index.html` |
+| SEO/AEO/GEO 메타 | www 대표 URL 기준 canonical, OG/Twitter, FAQ/HowTo/WebApplication JSON-LD, robots/sitemap, `llms.txt` | `public/index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` |
+| 정책 문서 | 한국어 이용약관·개인정보 처리방침, trust content 및 Breadcrumb JSON-LD | `public/terms.html`, `public/privacy.html` |
 
 ## 배포
 
@@ -59,6 +62,7 @@ vercel --prod
 ```
 - `vercel.json`: `buildCommand: "node build.js --prod"`, `outputDirectory: "dist"`
 - API Routes: `/api/*` → `api/` 폴더의 Serverless Functions
+- 대표 URL: `https://www.pixkit.kr/` (canonical, OG, sitemap, robots 모두 www 기준으로 유지)
 
 ### Cloudflare Workers (선택)
 ```bash
@@ -128,6 +132,8 @@ pnpm build
 - [ ] AI 모델 청크 분리: `dist/chunks/transformers.web-*.js`, `transformersRemover-*.js` 존재 (BiRefNet 모드 시에만 로드)
 - [ ] 신규 AI 모델 추가 시 라이선스 확인 — 상용 가능 라이선스(MIT/Apache 2.0)만 채택
 - [ ] Vercel 자동 배포 확인 (main 푸시 시 CI 트리거)
+- [ ] SEO 수정 시 canonical, `og:url`, JSON-LD `@id`, `robots.txt` Sitemap, `sitemap.xml` URL을 모두 `https://www.pixkit.kr/` 기준으로 동기화
+- [ ] 신규 공개 페이지 추가 시 `public/sitemap.xml`과 `tests/regression/staticSeo.test.js`에 URL 검증 추가
 - [ ] 업스트림 변경 병합 시 한국어 UI 커스텀 파일 충돌 확인
 
 ## 주의사항

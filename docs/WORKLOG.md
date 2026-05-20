@@ -1,5 +1,47 @@
 # WORKLOG
 
+## 2026-05-20 — PixKit 검색 최적화(AEO/SEO/GEO) 정리
+
+### 에이전트
+Codex
+
+### 유형
+seo (AEO/SEO/GEO, 정적 문서, 검증)
+
+### 영향 범위
+- 홈페이지 SEO 메타·구조화 데이터 수정 (`public/index.html`)
+- 대표 도메인 정합성 수정 (`public/robots.txt`, `public/sitemap.xml`)
+- 정책 문서 추가·개편 (`public/terms.html`, `public/privacy.html`)
+- AI 답변 엔진용 요약 파일 추가 (`public/llms.txt`)
+- 공유 썸네일 문구·도메인 갱신 (`public/assets/pixkit-og.svg`, `public/assets/pixkit-og.png`)
+- 정적 SEO 회귀 테스트 추가 (`tests/regression/staticSeo.test.js`)
+- 프로젝트 문서 동기화 (`CLAUDE.md`, `docs/WORKLOG.md`)
+
+### 내용
+- 라이브 도메인 `https://www.pixkit.kr/` 기준으로 canonical, hreflang, Open Graph, Twitter Card, JSON-LD `@id`, robots Sitemap, sitemap URL을 통일
+- Google/Naver 검색 노출을 위해 제목·description을 "무료 이미지·PDF 도구 / 배경 제거 / PDF 변환 / 워터마크 제거" 검색 의도에 맞게 재작성
+- WebPage + WebApplication + Organization 구조화 데이터를 보강하고, 기존 FAQPage/HowTo 스키마를 www 대표 URL로 정리
+- 홈페이지 본문에 대표 기능·처리 방식·권장 사용자 요약을 추가해 AEO/GEO 답변 인용에 필요한 명시 문맥 보강
+- 기존 영어·구브랜드 약관 페이지를 PixKit 한국어 이용약관으로 개편하고, 개인정보 처리방침 페이지를 신규 추가
+- `llms.txt`를 추가해 AI 답변 엔진이 PixKit의 기능, 개인정보 원칙, 대표 인용 URL을 빠르게 파악하도록 구성
+- 공유 이미지의 헤드라인을 "무료 이미지·PDF 도구 모음"으로 정리하고 도메인 표기를 `www.pixkit.kr`로 갱신
+- 검색 메타 URL 정합성, JSON-LD 파싱, sitemap/robots, 정책 페이지 색인 메타를 검증하는 정적 테스트 추가
+
+### 검증
+- `node --test tests/regression/staticSeo.test.js tests/regression/comparisonPortraitLayout.test.js` 성공
+- `pnpm build` 성공
+- 빌드 산출물 `dist/`에서 `index.html`, `robots.txt`, `sitemap.xml`, `terms.html`, `privacy.html`, `llms.txt` 반영 확인
+- Vercel 프로덕션 배포 성공: `dpl_BAu6nNxq4CDz9E3rDGbcUqdxDrhm`, alias `https://www.pixkit.kr`
+- 라이브 확인: `/`, `/robots.txt`, `/sitemap.xml`, `/privacy.html`, `/llms.txt` 200 응답 및 www canonical/sitemap 반영 확인
+- `pnpm test`는 기존 i18n 런타임 테스트 2건 실패로 전체 통과하지 않음 (`src/i18n.js`의 현재 fallback/locale rotation 동작과 테스트 기대값 불일치, 이번 SEO 변경 파일은 아님)
+- Playwright 스크린샷 검증은 로컬 브라우저 바이너리 미설치로 수행하지 못함
+
+### 주의사항
+- 대표 URL은 `https://www.pixkit.kr/`로 유지해야 하며, apex URL과 canonical/sitemap이 섞이면 네이버·구글 중복 URL 신호가 약해질 수 있음
+- `llms.txt`는 GEO 보조 파일이며 Google/Naver의 공식 ranking 보장 신호가 아니므로, 본문·schema·sitemap 정합성을 우선 유지할 것
+
+---
+
 ## 2026-05-14 — PixKit SNS 공유 메타·썸네일 추가
 
 ### 에이전트

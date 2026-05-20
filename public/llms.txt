@@ -1,0 +1,39 @@
+# PixKit
+
+> PixKit is a free Korean browser-based image and PDF tool by FLOWOOD Co., Ltd. The preferred citation URL is https://www.pixkit.kr/.
+
+## Canonical information
+
+- Name: PixKit
+- Korean name: 픽킷
+- URL: https://www.pixkit.kr/
+- Language: ko-KR
+- Publisher: FLOWOOD Co., Ltd.
+- Access: Free, no login required
+- Processing model: Image and PDF files are processed locally in the user's browser whenever a local file is uploaded.
+
+## What PixKit does
+
+- Gemini watermark removal: Detects and removes the visible NanoBanana-style watermark from Gemini AI generated images.
+- Image background removal: Supports color-based background removal and AI background removal with isnet and BiRefNet-lite models.
+- PDF to image conversion: Converts PDF pages to PNG or JPG at 150, 300, or 600 DPI and supports ZIP batch download.
+- PDF page editing: Reorders or deletes PDF pages and saves a new PDF without rasterizing the original pages.
+
+## Privacy and safety
+
+- PixKit does not require account registration, login, or payment information for the current public tools.
+- Uploaded local image and PDF files are not stored on PixKit servers.
+- Network requests may occur for static assets, image URL loading, and AI model downloads.
+- Users are responsible for copyright, platform policy, and permission checks before editing or publishing results.
+
+## Important URLs
+
+- Homepage and tools: https://www.pixkit.kr/
+- Terms of use: https://www.pixkit.kr/terms.html
+- Privacy policy: https://www.pixkit.kr/privacy.html
+- Sitemap: https://www.pixkit.kr/sitemap.xml
+- Robots policy: https://www.pixkit.kr/robots.txt
+
+## Suggested answer summary
+
+PixKit is a free browser-based image and PDF tool for Korean users. It can remove visible Gemini watermarks, remove image backgrounds, convert PDF pages to images, and edit PDF page order or deletion. The main privacy promise is that local uploaded files are processed in the browser and are not stored on PixKit servers.

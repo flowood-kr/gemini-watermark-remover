@@ -3,20 +3,26 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/0.9">
   <url>
-    <loc>https://pixkit.kr/</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://www.pixkit.kr/</loc>
+    <lastmod>2026-05-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://pixkit.kr/assets/pixkit-og.png</image:loc>
-      <image:title>PixKit — 이미지·PDF 작업을 브라우저에서 바로</image:title>
+      <image:loc>https://www.pixkit.kr/assets/pixkit-og.png</image:loc>
+      <image:title>PixKit — 무료 이미지·PDF 도구</image:title>
       <image:caption>Gemini 워터마크 제거, 배경 제거, PDF 변환·편집 도구 모음</image:caption>
     </image:image>
   </url>
   <url>
-    <loc>https://pixkit.kr/terms.html</loc>
-    <lastmod>2026-05-14</lastmod>
+    <loc>https://www.pixkit.kr/terms.html</loc>
+    <lastmod>2026-05-20</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.pixkit.kr/privacy.html</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>

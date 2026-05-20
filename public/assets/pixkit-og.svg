@@ -38,8 +38,8 @@
     <circle cx="24" cy="19" r="5" fill="#34D399"/>
     <text x="40" y="25" fill="#6EE7B7" font-size="18" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">무료 · 회원가입 없음</text>
 
-    <text x="0" y="114" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">이미지·PDF 작업을</text>
-    <text x="0" y="196" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">브라우저에서 바로</text>
+    <text x="0" y="114" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">무료 이미지·PDF</text>
+    <text x="0" y="196" fill="#F5F8FB" font-size="70" font-weight="900" letter-spacing="-1.6" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">도구 모음</text>
 
     <text x="0" y="254" fill="#AEB9C9" font-size="26" font-weight="600" letter-spacing="-0.1" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">워터마크 제거, 배경 제거, PDF 변환·편집까지 한 곳에서.</text>
     <text x="0" y="295" fill="#6EE7B7" font-size="24" font-weight="800" letter-spacing="-0.1" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">파일은 서버에 업로드되지 않습니다.</text>
@@ -97,6 +97,6 @@
 
   <g transform="translate(930 550)">
     <rect x="0" y="0" width="198" height="42" rx="21" fill="url(#mintPanel)"/>
-    <text x="99" y="28" text-anchor="middle" fill="#07111F" font-size="20" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">pixkit.kr</text>
+    <text x="99" y="28" text-anchor="middle" fill="#07111F" font-size="19" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif">www.pixkit.kr</text>
   </g>
 </svg>
