@@ -16,6 +16,12 @@ function extractJsonLd(html) {
         .map((match) => JSON.parse(match[1]));
 }
 
+function extractTagContent(html, regex, label) {
+    const match = html.match(regex);
+    assert.ok(match, `missing ${label}`);
+    return match[1];
+}
+
 test('public SEO files use the www canonical host', () => {
     const files = [
         'index.html',
@@ -35,9 +41,13 @@ test('public SEO files use the www canonical host', () => {
 
 test('homepage exposes indexable metadata and structured data', () => {
     const html = readPublic('index.html');
+    const title = extractTagContent(html, /<title>([^<]+)<\/title>/, 'title');
+    const description = extractTagContent(html, /<meta name="description" content="([^"]+)" \/>/, 'meta description');
 
-    assert.match(html, /<title>PixKit \| 무료 이미지·PDF 도구/);
-    assert.match(html, /<meta name="description" content="PixKit은 Gemini 워터마크 제거/);
+    assert.equal(title, 'PixKit | 무료 이미지·PDF 도구');
+    assert.equal(description, 'PixKit은 배경 제거, PDF 변환·편집, 워터마크 제거를 무료로 제공하며 파일을 서버에 저장하지 않습니다.');
+    assert.ok(title.length <= 40, 'Naver title guideline should stay under 40 chars');
+    assert.ok(description.length <= 80, 'Naver description guideline should stay under 80 chars');
     assert.match(html, /<meta name="robots" content="index, follow/);
     assert.match(html, /<link rel="canonical" href="https:\/\/www\.pixkit\.kr\/" \/>/);
     assert.match(html, /<meta property="og:url" content="https:\/\/www\.pixkit\.kr\/" \/>/);

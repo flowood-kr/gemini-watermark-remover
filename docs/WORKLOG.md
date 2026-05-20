@@ -1,5 +1,28 @@
 # WORKLOG
 
+## 2026-05-20 — 네이버 서치어드바이저 제목·설명 길이 수정
+
+### 에이전트
+Codex
+
+### 유형
+fix (Naver SEO 진단 대응)
+
+### 영향 범위
+- 홈페이지 기본 title/description 단축 (`public/index.html`)
+- 네이버 권장 길이 회귀 테스트 추가 (`tests/regression/staticSeo.test.js`)
+
+### 내용
+- 네이버 서치어드바이저 실시간 진단에서 사이트 제목 40자 초과, 사이트 설명 80자 초과 경고 확인
+- 기본 `<title>`을 `PixKit | 무료 이미지·PDF 도구`로 단축
+- 기본 meta description을 62자로 단축해 핵심 검색 의도(배경 제거, PDF 변환·편집, 워터마크 제거, 무료, 서버 미저장)를 유지
+- OG 제목/설명은 네이버 진단에서 정상 판정이므로 유지
+
+### 검증
+- `node --test tests/regression/staticSeo.test.js` 성공
+
+---
+
 ## 2026-05-20 — Google Search Console sitemap 이미지 네임스페이스 수정
 
 ### 에이전트
