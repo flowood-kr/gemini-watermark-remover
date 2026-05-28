@@ -1,5 +1,34 @@
 # WORKLOG
 
+## 2026-05-28 — Auto-Branding CTA·상단 배너 전환
+
+### 에이전트
+Codex
+
+### 유형
+feat (외부 서비스 유입 배너 변경)
+
+### 영향 범위
+- 헤더 우측 CTA 문구·링크 수정 (`public/index.html`)
+- 99PAGE GIF 배너를 Auto-Branding 반응형 HTML 배너로 교체 (`public/index.html`)
+- Auto-Branding 링크 회귀 테스트 추가 (`tests/regression/staticSeo.test.js`)
+- 프로젝트 기능/체크리스트 문서 동기화 (`CLAUDE.md`)
+
+### 내용
+- 헤더 CTA를 `Auto-Branding → 구글 블로그 자동 포스팅 | AI 검색 노출을 위한 준비` 문구로 변경하고 `https://auto-branding.com/`으로 연결
+- 상단 배너를 첨부 HTML의 Auto-Branding 톤에 맞춰 네이비/블루/그린 계열의 검색·AI 노출 유입 배너로 재디자인
+- 모바일 헤더에서는 긴 문구가 레이아웃을 밀지 않도록 축약 표시하고, title/aria-label에는 전체 의미를 유지
+- 홈페이지 구조화 데이터의 FLOWOOD `sameAs` 링크도 Auto-Branding으로 동기화
+- 기존 `page-e.net` 링크가 홈페이지에 남지 않도록 정적 회귀 테스트를 추가
+
+### 검증
+- `node --test tests/regression/staticSeo.test.js` 성공
+- `pnpm build` 성공
+- Chrome 캡처 검증: 1280px 데스크톱, 390px 모바일에서 배너 노출 확인
+- Playwright DOM 검증: 헤더 CTA·배너 href 모두 `https://auto-branding.com/`, 가로 오버플로 0px
+
+---
+
 ## 2026-05-20 — 네이버 서치어드바이저 제목·설명 길이 수정
 
 ### 에이전트

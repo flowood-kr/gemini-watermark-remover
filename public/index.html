@@ -52,7 +52,7 @@
         "url": "https://www.pixkit.kr/",
         "logo": "https://www.pixkit.kr/assets/pixkit-og.png",
         "sameAs": [
-          "https://page-e.net/"
+          "https://auto-branding.com/"
         ]
       },
       {
@@ -292,6 +292,159 @@
     .checker-bg {
       background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0iI2Y5ZmRmZCI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZjJmMmYyIi8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNmMmYyZjIiLz48L3N2Zz4=');
     }
+    .auto-branding-banner {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.62fr);
+      gap: clamp(1rem, 3vw, 2rem);
+      min-height: 128px;
+      padding: clamp(1rem, 3vw, 1.625rem) clamp(1rem, 4vw, 2.25rem);
+      color: oklch(98% 0.006 250);
+      background:
+        linear-gradient(90deg, oklch(99% 0.005 250 / 0.11) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(0deg, oklch(99% 0.005 250 / 0.08) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(135deg, oklch(20% 0.055 265) 0%, oklch(30% 0.12 264) 58%, oklch(55% 0.13 166) 100%);
+      border: 1px solid oklch(70% 0.08 250 / 0.36);
+      border-radius: 1.15rem;
+      box-shadow: 0 18px 42px oklch(12% 0.045 265 / 0.22);
+      overflow: hidden;
+      transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+    }
+    .auto-branding-banner:hover {
+      transform: translateY(-1px);
+      border-color: oklch(77% 0.14 166 / 0.58);
+      box-shadow: 0 22px 54px oklch(12% 0.045 265 / 0.28);
+    }
+    .auto-branding-banner:focus-visible {
+      outline: 2px solid oklch(74% 0.16 166);
+      outline-offset: 3px;
+    }
+    .auto-branding-banner__content,
+    .auto-branding-banner__visual {
+      position: relative;
+      z-index: 1;
+    }
+    .auto-branding-banner__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 0.45rem;
+      border-radius: 999px;
+      padding: 0.28rem 0.65rem;
+      background: oklch(99% 0.005 250 / 0.12);
+      color: oklch(89% 0.11 166);
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .auto-branding-banner__eyebrow::before {
+      content: "";
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 999px;
+      background: oklch(75% 0.17 166);
+      box-shadow: 0 0 0 4px oklch(75% 0.17 166 / 0.16);
+    }
+    .auto-branding-banner__title {
+      display: block;
+      margin-top: 0.72rem;
+      color: oklch(99% 0.005 250);
+      font-size: clamp(1.28rem, 3.1vw, 2.05rem);
+      font-weight: 800;
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+    .auto-branding-banner__copy {
+      max-width: 44rem;
+      margin-top: 0.42rem;
+      color: oklch(87% 0.025 255);
+      font-size: clamp(0.86rem, 1.7vw, 1rem);
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+    .auto-branding-banner__visual {
+      align-self: center;
+      display: grid;
+      gap: 0.6rem;
+    }
+    .auto-branding-banner__panel {
+      border: 1px solid oklch(99% 0.005 250 / 0.18);
+      border-radius: 0.9rem;
+      padding: 0.8rem;
+      background: oklch(99% 0.005 250 / 0.11);
+      box-shadow: inset 0 1px 0 oklch(99% 0.005 250 / 0.18);
+    }
+    .auto-branding-banner__window {
+      display: flex;
+      align-items: center;
+      gap: 0.36rem;
+      margin-bottom: 0.72rem;
+    }
+    .auto-branding-banner__window span {
+      width: 0.38rem;
+      height: 0.38rem;
+      border-radius: 999px;
+      background: oklch(83% 0.13 166);
+    }
+    .auto-branding-banner__line {
+      display: block;
+      height: 0.48rem;
+      border-radius: 999px;
+      background: oklch(99% 0.005 250 / 0.72);
+    }
+    .auto-branding-banner__line + .auto-branding-banner__line {
+      margin-top: 0.42rem;
+      background: oklch(89% 0.11 166 / 0.78);
+    }
+    .auto-branding-banner__line:nth-of-type(2) {
+      width: 72%;
+    }
+    .auto-branding-banner__line:nth-of-type(3) {
+      width: 48%;
+    }
+    .auto-branding-banner__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.42rem;
+    }
+    .auto-branding-banner__chips span,
+    .auto-branding-banner__cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 1.8rem;
+      border-radius: 999px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .auto-branding-banner__chips span {
+      background: oklch(99% 0.005 250 / 0.13);
+      color: oklch(93% 0.045 166);
+      border: 1px solid oklch(99% 0.005 250 / 0.14);
+    }
+    .auto-branding-banner__cta {
+      width: fit-content;
+      background: oklch(99% 0.005 250);
+      color: oklch(30% 0.12 264);
+      box-shadow: 0 10px 24px oklch(12% 0.045 265 / 0.2);
+    }
+    @media (max-width: 640px) {
+      .auto-branding-banner {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        border-radius: 1rem;
+      }
+      .auto-branding-banner__visual {
+        grid-template-columns: 1fr auto;
+        align-items: end;
+      }
+      .auto-branding-banner__panel {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 min-h-screen loading">
@@ -312,13 +465,15 @@
       </a>
       <div class="flex items-center gap-2">
         <a
-          href="https://page-e.net/"
+          href="https://auto-branding.com/"
           target="_blank"
           rel="noopener sponsored"
-          class="inline-flex h-8 items-center rounded-full border border-blue-200/80 dark:border-blue-400/20 bg-blue-50/80 dark:bg-blue-950/30 px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-          aria-label="홈페이지 기획・제작・운영 99PAGE 상담 페이지로 이동"
+          class="inline-flex h-8 max-w-[9.5rem] sm:max-w-none items-center overflow-hidden rounded-full border border-emerald-200/80 dark:border-emerald-400/20 bg-emerald-50/80 dark:bg-emerald-950/30 px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+          aria-label="Auto-Branding 구글 블로그 자동 포스팅 서비스로 이동"
+          title="Auto-Branding → 구글 블로그 자동 포스팅 | AI 검색 노출을 위한 준비"
         >
-          홈페이지 기획・제작・운영 | 99PAGE 상담
+          <span class="hidden sm:inline">Auto-Branding → 구글 블로그 자동 포스팅 | AI 검색 노출을 위한 준비</span>
+          <span class="sm:hidden truncate">Auto-Branding</span>
         </a>
         <button id="themeToggle" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors">
           <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -328,29 +483,34 @@
     </div>
   </header>
 
-  <!-- 99PAGE 배너 -->
+  <!-- Auto-Branding 배너 -->
   <aside class="max-w-5xl mx-auto px-4 pt-4">
     <a
-      href="https://page-e.net/"
+      href="https://auto-branding.com/"
       target="_blank"
       rel="noopener sponsored"
-      class="block rounded-2xl bg-white dark:bg-gray-900 border border-blue-100 dark:border-gray-800 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-950 transition-shadow overflow-hidden"
-      aria-label="99PAGE 홈페이지 제작 서비스 page-e.net으로 이동"
+      class="auto-branding-banner"
+      aria-label="Auto-Branding 구글 블로그 자동 포스팅 서비스 auto-branding.com으로 이동"
     >
-      <img
-        src="/assets/99page-banner-mobile.gif"
-        width="640"
-        height="112"
-        class="block w-full h-auto sm:hidden"
-        alt="99PAGE 홈페이지 제작 서비스, 홈페이지 월 9만 9천원, 상담 보기"
-      />
-      <img
-        src="/assets/99page-banner.gif"
-        width="960"
-        height="90"
-        class="hidden w-full h-auto sm:block"
-        alt="99PAGE 홈페이지 제작 서비스, 홈페이지 월 9만 9천원, 상담 보기"
-      />
+      <div class="auto-branding-banner__content">
+        <span class="auto-branding-banner__eyebrow">Auto-Branding</span>
+        <strong class="auto-branding-banner__title">구글 블로그 자동 포스팅</strong>
+        <p class="auto-branding-banner__copy">매일 1편 SEO·AEO·GEO 브랜드 콘텐츠를 발행해 검색과 AI 답변 노출을 준비합니다.</p>
+      </div>
+      <div class="auto-branding-banner__visual" aria-hidden="true">
+        <div class="auto-branding-banner__panel">
+          <div class="auto-branding-banner__window"><span></span><span></span><span></span></div>
+          <i class="auto-branding-banner__line"></i>
+          <i class="auto-branding-banner__line"></i>
+          <i class="auto-branding-banner__line"></i>
+        </div>
+        <div class="auto-branding-banner__chips">
+          <span>SEO</span>
+          <span>AEO</span>
+          <span>GEO</span>
+        </div>
+        <span class="auto-branding-banner__cta">서비스 보기 →</span>
+      </div>
     </a>
   </aside>
 

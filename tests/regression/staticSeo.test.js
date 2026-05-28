@@ -52,6 +52,9 @@ test('homepage exposes indexable metadata and structured data', () => {
     assert.match(html, /<link rel="canonical" href="https:\/\/www\.pixkit\.kr\/" \/>/);
     assert.match(html, /<meta property="og:url" content="https:\/\/www\.pixkit\.kr\/" \/>/);
     assert.match(html, /<link rel="sitemap" type="application\/xml" href="\/sitemap\.xml" \/>/);
+    assert.match(html, /href="https:\/\/auto-branding\.com\/"/);
+    assert.match(html, /Auto-Branding → 구글 블로그 자동 포스팅 \| AI 검색 노출을 위한 준비/);
+    assert.equal(html.includes('https://page-e.net/'), false, 'homepage CTA should no longer point to 99PAGE');
 
     const blocks = extractJsonLd(html);
     assert.equal(blocks.length, 3);
