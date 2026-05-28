@@ -1,5 +1,27 @@
 # WORKLOG
 
+## 2026-05-28 — Microsoft/Bing 사이트 인증 메타 추가
+
+### 에이전트
+Codex
+
+### 유형
+seo (사이트 소유권 인증)
+
+### 영향 범위
+- 홈페이지 head 메타 태그 추가 (`public/index.html`)
+- 정적 SEO 회귀 테스트 보강 (`tests/regression/staticSeo.test.js`)
+
+### 내용
+- Bing Webmaster Tools / Microsoft 사이트 인증용 `<meta name="msvalidate.01" content="D22AD637595A7F9AF0B8B6B99223D9B3" />` 태그를 홈페이지 `<head>` 초반에 추가
+- 인증 태그가 누락되지 않도록 정적 SEO 테스트에 검증 추가
+
+### 검증
+- `node --test tests/regression/staticSeo.test.js` 성공
+- `pnpm build` 성공
+
+---
+
 ## 2026-05-28 — Auto-Branding CTA·상단 배너 전환
 
 ### 에이전트

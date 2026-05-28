@@ -49,6 +49,7 @@ test('homepage exposes indexable metadata and structured data', () => {
     assert.ok(title.length <= 40, 'Naver title guideline should stay under 40 chars');
     assert.ok(description.length <= 80, 'Naver description guideline should stay under 80 chars');
     assert.match(html, /<meta name="robots" content="index, follow/);
+    assert.match(html, /<meta name="msvalidate\.01" content="D22AD637595A7F9AF0B8B6B99223D9B3" \/>/);
     assert.match(html, /<link rel="canonical" href="https:\/\/www\.pixkit\.kr\/" \/>/);
     assert.match(html, /<meta property="og:url" content="https:\/\/www\.pixkit\.kr\/" \/>/);
     assert.match(html, /<link rel="sitemap" type="application\/xml" href="\/sitemap\.xml" \/>/);
